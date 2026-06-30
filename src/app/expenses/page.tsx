@@ -14,7 +14,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { StateMessage } from "@/components/feedback/state-message";
 import { createExpense, deleteExpense, updateExpense } from "@/features/expenses/services/expense-service";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { expenseOccursInMonth } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, todayIso } from "@/lib/utils/dates";
@@ -24,19 +24,19 @@ const blank = { description: "", amount: 0, categoryId: "", type: "fixed" as Exp
 
 export default function ExpensesPage() {
   const [reference, setReference] = useState(currentMonthReference());
-  const expenses = useHouseholdCollection<Expense>("expenses");
-  const categories = useHouseholdCollection<ExpenseCategory>("expenseCategories");
+  const expenses = usePersonalCollection<Expense>("expenses");
+  const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
   const monthItems = useMemo(() => expenses.data.filter((expense) => expenseOccursInMonth(expense, reference)), [expenses.data, reference]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!expenses.householdId) return;
+    if (!expenses.householdId || !expenses.ownerUid) return;
     const categoryId = form.categoryId || categories.data[0]?.id || "";
     const payload = { ...form, categoryId, amount: Number(form.amount), paidAt: form.isPaid ? todayIso() : undefined, recurrenceDay: new Date(`${form.dueDate}T00:00:00`).getDate() };
     if (editingId) await updateExpense(editingId, payload);
-    else await createExpense({ householdId: expenses.householdId, ...payload });
+    else await createExpense({ householdId: expenses.householdId, ownerUid: expenses.ownerUid, ...payload });
     setForm(blank);
     setEditingId(null);
     await expenses.reload();

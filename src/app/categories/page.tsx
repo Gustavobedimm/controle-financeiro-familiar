@@ -10,15 +10,15 @@ import { Select } from "@/components/ui/select";
 import { StateMessage } from "@/components/feedback/state-message";
 import { Badge } from "@/components/ui/badge";
 import { createCategory, deleteCategory, updateCategory } from "@/features/categories/services/category-service";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import type { CreditCardInstallment, Expense, ExpenseCategory, ExpenseCategoryType } from "@/types/finance";
 
 const blank = { name: "", type: "variable" as ExpenseCategoryType, color: "#2a9d8f", icon: "circle" };
 
 export default function CategoriesPage() {
-  const categories = useHouseholdCollection<ExpenseCategory>("expenseCategories");
-  const expenses = useHouseholdCollection<Expense>("expenses");
-  const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
+  const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
+  const expenses = usePersonalCollection<Expense>("expenses");
+  const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -28,9 +28,9 @@ export default function CategoriesPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!categories.householdId) return;
+    if (!categories.householdId || !categories.ownerUid) return;
     if (editingId) await updateCategory(editingId, form);
-    else await createCategory({ householdId: categories.householdId, ...form });
+    else await createCategory({ householdId: categories.householdId, ownerUid: categories.ownerUid, ...form });
     setForm(blank);
     setEditingId(null);
     await categories.reload();

@@ -26,6 +26,18 @@ service cloud.firestore {
         && resource.data.householdId == householdId();
     }
 
+    function writesPersonalResource() {
+      return ownsHouseholdResource()
+        && request.resource.data.ownerUid is string
+        && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    function ownsPersonalResource() {
+      return readsHouseholdResource()
+        && resource.data.ownerUid is string
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
     match /users/{uid} {
       allow read: if signedIn() && (uid == request.auth.uid || resource.data.householdId == householdId());
       allow create: if signedIn() && uid == request.auth.uid;
@@ -44,13 +56,32 @@ service cloud.firestore {
         "incomes", "expenseCategories", "expenses", "creditCards",
         "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
       ] && readsHouseholdResource();
-      allow create, update: if collection in [
+
+      allow create: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
         "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
-      ] && ownsHouseholdResource();
+      ] && writesPersonalResource();
+
+      allow update: if collection in [
+        "incomes", "expenseCategories", "expenses", "creditCards",
+        "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+      ] && ownsPersonalResource() && writesPersonalResource();
+
       allow delete: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
         "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+      ] && ownsPersonalResource();
+
+      allow read: if collection in [
+        "savingsBoxes", "savingsContributions"
+      ] && readsHouseholdResource();
+
+      allow create, update: if collection in [
+        "savingsBoxes", "savingsContributions"
+      ] && ownsHouseholdResource();
+
+      allow delete: if collection in [
+        "savingsBoxes", "savingsContributions"
       ] && readsHouseholdResource();
     }
   }

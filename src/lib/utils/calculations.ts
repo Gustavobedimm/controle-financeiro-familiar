@@ -42,6 +42,7 @@ export function generateInstallments(input: {
     return {
       id: `${input.purchase.id}-${index + 1}`,
       householdId: input.purchase.householdId,
+      ownerUid: input.purchase.ownerUid,
       cardId: input.purchase.cardId,
       purchaseId: input.purchase.id,
       description: input.purchase.description,

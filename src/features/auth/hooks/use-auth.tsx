@@ -4,6 +4,7 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { auth } from "@/lib/firebase/auth";
 import { getDocument } from "@/lib/firebase/firestore";
+import { ensurePersonalDefaultCategories } from "@/features/auth/services/auth-service";
 import type { AppUser } from "@/types/finance";
 
 interface AuthContextValue {
@@ -38,7 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
-      setAppUser(user ? await getUserProfileWithRetry(user.uid) : null);
+      const profile = user ? await getUserProfileWithRetry(user.uid) : null;
+      if (profile) await ensurePersonalDefaultCategories(profile);
+      setAppUser(profile);
       setLoading(false);
     });
   }, []);

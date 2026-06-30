@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { StateMessage } from "@/components/feedback/state-message";
 import { createIncome, deleteIncome, updateIncome } from "@/features/incomes/services/income-service";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, todayIso } from "@/lib/utils/dates";
 import { incomeOccursInMonth } from "@/lib/utils/calculations";
@@ -23,7 +23,7 @@ const blank = { description: "", amount: 0, type: "salary" as IncomeType, receiv
 
 export default function IncomesPage() {
   const [reference, setReference] = useState(currentMonthReference());
-  const { data, loading, reload, householdId } = useHouseholdCollection<Income>("incomes");
+  const { data, loading, reload, householdId, ownerUid } = usePersonalCollection<Income>("incomes");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -31,10 +31,10 @@ export default function IncomesPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!householdId) return;
+    if (!householdId || !ownerUid) return;
     const payload = { ...form, amount: Number(form.amount), recurrenceDay: new Date(`${form.receivedAt}T00:00:00`).getDate() };
     if (editingId) await updateIncome(editingId, payload);
-    else await createIncome({ householdId, ...payload });
+    else await createIncome({ householdId, ownerUid, ...payload });
     setForm(blank);
     setEditingId(null);
     await reload();

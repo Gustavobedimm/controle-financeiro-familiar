@@ -11,16 +11,16 @@ import { Select } from "@/components/ui/select";
 import { StateMessage } from "@/components/feedback/state-message";
 import { updateInstallment } from "@/features/credit-cards/services/card-service";
 import { markInvoiceAsPaid } from "@/features/invoices/services/invoice-service";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, todayIso } from "@/lib/utils/dates";
 import type { CreditCard, CreditCardInstallment, CreditCardPurchase } from "@/types/finance";
 
 export default function InvoicesPage() {
   const [reference, setReference] = useState(currentMonthReference());
-  const cards = useHouseholdCollection<CreditCard>("creditCards");
-  const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
-  const purchases = useHouseholdCollection<CreditCardPurchase>("creditCardPurchases");
+  const cards = usePersonalCollection<CreditCard>("creditCards");
+  const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
+  const purchases = usePersonalCollection<CreditCardPurchase>("creditCardPurchases");
   const [cardId, setCardId] = useState("");
 
   const selectedCardId = cardId || cards.data[0]?.id || "";

@@ -27,6 +27,7 @@ export type ExpenseType = "fixed" | "variable";
 export interface Income {
   id: string;
   householdId: string;
+  ownerUid: string;
   description: string;
   amount: number;
   type: IncomeType;
@@ -40,6 +41,7 @@ export interface Income {
 export interface ExpenseCategory {
   id: string;
   householdId: string;
+  ownerUid: string;
   name: string;
   type: ExpenseCategoryType;
   color: string;
@@ -51,6 +53,7 @@ export interface ExpenseCategory {
 export interface Expense {
   id: string;
   householdId: string;
+  ownerUid: string;
   description: string;
   amount: number;
   categoryId: string;
@@ -68,6 +71,7 @@ export interface Expense {
 export interface CreditCard {
   id: string;
   householdId: string;
+  ownerUid: string;
   name: string;
   closingDay: number;
   dueDay: number;
@@ -80,6 +84,7 @@ export interface CreditCard {
 export interface CreditCardPurchase {
   id: string;
   householdId: string;
+  ownerUid: string;
   cardId: string;
   description: string;
   totalAmount: number;
@@ -95,6 +100,7 @@ export interface CreditCardPurchase {
 export interface CreditCardInstallment {
   id: string;
   householdId: string;
+  ownerUid: string;
   cardId: string;
   purchaseId: string;
   description: string;
@@ -114,6 +120,7 @@ export interface CreditCardInstallment {
 export interface MonthlyClosing {
   id: string;
   householdId: string;
+  ownerUid: string;
   month: number;
   year: number;
   totalIncome: number;
@@ -122,6 +129,39 @@ export interface MonthlyClosing {
   totalCreditCardExpenses: number;
   expectedBalance: number;
   realBalance: number;
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
+}
+
+export type SavingsBoxYieldType = "none" | "cdi" | "fixed";
+export type SavingsContributionType = "deposit" | "withdrawal" | "yield";
+
+export interface SavingsBox {
+  id: string;
+  householdId: string;
+  name: string;
+  goalAmount?: number;
+  targetDate?: string;
+  institution?: string;
+  yieldType: SavingsBoxYieldType;
+  yieldPercent?: number;
+  annualRate?: number;
+  notes?: string;
+  createdByUid: string;
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
+}
+
+export interface SavingsContribution {
+  id: string;
+  householdId: string;
+  savingsBoxId: string;
+  createdByUid: string;
+  createdByName: string;
+  amount: number;
+  type: SavingsContributionType;
+  contributedAt: string;
+  notes?: string;
   createdAt: TimestampLike;
   updatedAt: TimestampLike;
 }

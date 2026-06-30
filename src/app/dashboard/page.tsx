@@ -9,7 +9,7 @@ import { MonthSelector } from "@/components/forms/month-selector";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Badge } from "@/components/ui/badge";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { calculateMonthlySummary } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, nextMonths, readableMonth } from "@/lib/utils/dates";
@@ -17,10 +17,10 @@ import type { CreditCardInstallment, Expense, ExpenseCategory, Income } from "@/
 
 export default function DashboardPage() {
   const [reference, setReference] = useState(currentMonthReference());
-  const incomes = useHouseholdCollection<Income>("incomes");
-  const expenses = useHouseholdCollection<Expense>("expenses");
-  const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
-  const categories = useHouseholdCollection<ExpenseCategory>("expenseCategories");
+  const incomes = usePersonalCollection<Income>("incomes");
+  const expenses = usePersonalCollection<Expense>("expenses");
+  const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
+  const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
 
   const summary = useMemo(
     () =>

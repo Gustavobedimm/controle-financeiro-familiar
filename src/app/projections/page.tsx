@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Badge } from "@/components/ui/badge";
 import { StateMessage } from "@/components/feedback/state-message";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { calculateMonthlySummary } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, nextMonths, readableMonth } from "@/lib/utils/dates";
@@ -16,10 +16,10 @@ import type { CreditCardInstallment, CreditCardPurchase, Expense, Income } from 
 
 export default function ProjectionsPage() {
   const [reference, setReference] = useState(currentMonthReference());
-  const incomes = useHouseholdCollection<Income>("incomes");
-  const expenses = useHouseholdCollection<Expense>("expenses");
-  const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
-  const purchases = useHouseholdCollection<CreditCardPurchase>("creditCardPurchases");
+  const incomes = usePersonalCollection<Income>("incomes");
+  const expenses = usePersonalCollection<Expense>("expenses");
+  const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
+  const purchases = usePersonalCollection<CreditCardPurchase>("creditCardPurchases");
 
   const rows = useMemo(
     () =>

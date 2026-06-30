@@ -2,9 +2,10 @@
 
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
-import { db } from "@/lib/firebase/firestore";
+import { db, listPersonalByHousehold } from "@/lib/firebase/firestore";
 import { registerWithEmail } from "@/lib/firebase/auth";
 import { DEFAULT_CATEGORIES } from "@/constants/categories";
+import type { AppUser, ExpenseCategory } from "@/types/finance";
 
 export interface CreateUserHouseholdResult {
   credential: Awaited<ReturnType<typeof registerWithEmail>>;
@@ -43,6 +44,7 @@ export async function createUserHousehold(params: {
       DEFAULT_CATEGORIES.map((category) =>
         setDoc(doc(db, "expenseCategories", crypto.randomUUID()), {
           householdId,
+          ownerUid: credential.user.uid,
           ...category,
           createdAt: now,
           updatedAt: now
@@ -77,5 +79,23 @@ export async function ensureUserProfile(user: User) {
       updatedAt: now
     },
     { merge: true }
+  );
+}
+
+export async function ensurePersonalDefaultCategories(user: AppUser) {
+  const existing = await listPersonalByHousehold<ExpenseCategory>("expenseCategories", user.householdId, user.uid);
+  if (existing.length > 0) return;
+
+  const now = serverTimestamp();
+  await Promise.all(
+    DEFAULT_CATEGORIES.map((category) =>
+      setDoc(doc(db, "expenseCategories", crypto.randomUUID()), {
+        householdId: user.householdId,
+        ownerUid: user.uid,
+        ...category,
+        createdAt: now,
+        updatedAt: now
+      })
+    )
   );
 }

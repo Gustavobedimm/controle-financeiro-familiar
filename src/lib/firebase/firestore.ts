@@ -40,6 +40,23 @@ export async function listByHousehold<T extends { id: string }>(
   return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
 }
 
+export async function listPersonalByHousehold<T extends { id: string }>(
+  collectionName: string,
+  householdId: string,
+  ownerUid: string,
+  constraints: QueryConstraint[] = []
+): Promise<T[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, collectionName),
+      where("householdId", "==", householdId),
+      where("ownerUid", "==", ownerUid),
+      ...constraints
+    )
+  );
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
+}
+
 export async function createHouseholdDoc<T extends DocumentData>(collectionName: string, data: T): Promise<string> {
   const ref = await addDoc(collection(db, collectionName), { ...data, ...nowFields() });
   return ref.id;

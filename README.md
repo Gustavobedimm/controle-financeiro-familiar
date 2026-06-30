@@ -27,6 +27,8 @@ Aplicação Next.js para controle financeiro pessoal/familiar com autenticação
 - Marcação de parcelas ou fatura inteira como paga.
 - Projeção dos próximos 12 meses.
 - Gráficos básicos de categoria, saldo e receitas x despesas.
+- Caixinhas compartilhadas para objetivos familiares, com aportes por usuário e rendimento estimado.
+- Página de grupo para listar usuários do mesmo household e visualizar um resumo financeiro por pessoa.
 - Regras do Firestore isolando dados por `householdId`.
 
 ## Configuração local
@@ -89,6 +91,16 @@ firebase emulators:start
 - `src/lib/firebase`: configuração Auth/Firestore.
 - `src/lib/utils`: moeda, datas, cálculos e validações.
 - `src/types`: entidades principais do domínio financeiro.
+
+## Caixinhas
+
+A tela `/savings` permite criar caixinhas compartilhadas pelo `householdId`, como uma reserva para comprar uma casa. Cada lançamento salva quem fez o aporte (`createdByUid` e `createdByName`), permitindo acompanhar quanto cada pessoa colocou. Para produtos como a caixinha do Nubank que rende um percentual do CDI, informe o percentual do CDI e, opcionalmente, um CDI anual estimado para exibir uma projeção simples de rendimento mensal.
+
+## Dados pessoais e grupo
+
+Receitas, despesas, cartões, compras parceladas, faturas, projeções e categorias são dados pessoais e ficam vinculados ao `ownerUid` do usuário logado. As telas principais carregam somente os dados desse usuário.
+
+As caixinhas continuam compartilhadas pelo `householdId`. A tela `/group` lista os usuários do mesmo household e permite abrir uma visão geral por pessoa, com totais mensais, cartões e aportes nas caixinhas.
 
 ## Observações
 

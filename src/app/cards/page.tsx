@@ -12,36 +12,37 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StateMessage } from "@/components/feedback/state-message";
 import { createCreditCard, createPurchaseWithInstallments, deleteCreditCard, deletePurchaseAndInstallments } from "@/features/credit-cards/services/card-service";
-import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, monthKey, todayIso } from "@/lib/utils/dates";
 import type { CreditCard, CreditCardInstallment, CreditCardPurchase, ExpenseCategory } from "@/types/finance";
 
 export default function CardsPage() {
-  const cards = useHouseholdCollection<CreditCard>("creditCards");
-  const categories = useHouseholdCollection<ExpenseCategory>("expenseCategories");
-  const purchases = useHouseholdCollection<CreditCardPurchase>("creditCardPurchases");
-  const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
+  const cards = usePersonalCollection<CreditCard>("creditCards");
+  const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
+  const purchases = usePersonalCollection<CreditCardPurchase>("creditCardPurchases");
+  const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const [cardForm, setCardForm] = useState({ name: "", limit: 0, closingDay: 25, dueDay: 10, color: "#2a9d8f" });
   const [purchaseForm, setPurchaseForm] = useState({ cardId: "", description: "", totalAmount: 0, installments: 1, purchaseDate: todayIso(), categoryId: "", notes: "" });
 
   async function addCard(event: React.FormEvent) {
     event.preventDefault();
-    if (!cards.householdId) return;
-    await createCreditCard({ householdId: cards.householdId, ...cardForm, limit: Number(cardForm.limit), closingDay: Number(cardForm.closingDay), dueDay: Number(cardForm.dueDay) });
+    if (!cards.householdId || !cards.ownerUid) return;
+    await createCreditCard({ householdId: cards.householdId, ownerUid: cards.ownerUid, ...cardForm, limit: Number(cardForm.limit), closingDay: Number(cardForm.closingDay), dueDay: Number(cardForm.dueDay) });
     setCardForm({ name: "", limit: 0, closingDay: 25, dueDay: 10, color: "#2a9d8f" });
     await cards.reload();
   }
 
   async function addPurchase(event: React.FormEvent) {
     event.preventDefault();
-    if (!cards.householdId) return;
+    if (!cards.householdId || !cards.ownerUid) return;
     const card = cards.data.find((item) => item.id === purchaseForm.cardId) || cards.data[0];
     if (!card) return;
     await createPurchaseWithInstallments({
       card,
       purchase: {
         householdId: cards.householdId,
+        ownerUid: cards.ownerUid,
         cardId: card.id,
         description: purchaseForm.description,
         totalAmount: Number(purchaseForm.totalAmount),

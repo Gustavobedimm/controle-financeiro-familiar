@@ -1,0 +1,9 @@
+.next
+node_modules
+.env.local
+dist
+coverage
+firebase-debug.log
+firestore-debug.log
+.DS_Store
+tsconfig.tsbuildinfo

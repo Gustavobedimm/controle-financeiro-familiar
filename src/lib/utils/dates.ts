@@ -30,6 +30,19 @@ export function addMonthsToReference(reference: MonthReference, amount: number):
   return { month: next.getMonth() + 1, year: next.getFullYear() };
 }
 
+export function firstInvoiceMonthFromPurchase(purchaseDate: string, closingDay: number, dueDay: number): MonthReference {
+  const date = parseISO(purchaseDate);
+  const purchaseReference = { month: date.getMonth() + 1, year: date.getFullYear() };
+  const closingReference = date.getDate() <= closingDay ? purchaseReference : addMonthsToReference(purchaseReference, 1);
+
+  // A fatura é paga no vencimento posterior ao fechamento.
+  return dueDay > closingDay ? closingReference : addMonthsToReference(closingReference, 1);
+}
+
+export function isPastDate(date: string): boolean {
+  return parseISO(date) < startOfMonth(new Date()) || date < todayIso();
+}
+
 export function nextMonths(reference: MonthReference, count: number): MonthReference[] {
   return Array.from({ length: count }, (_, index) => addMonthsToReference(reference, index));
 }

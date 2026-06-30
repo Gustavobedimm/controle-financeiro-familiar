@@ -6,14 +6,21 @@ export function CategoryPieChart({ data }: { data: Array<{ name: string; value: 
   return (
     <div className="h-72 rounded-lg border border-black/10 bg-white p-4">
       <h2 className="mb-3 text-sm font-bold text-ink">Despesas por categoria</h2>
-      <ResponsiveContainer width="100%" height="88%">
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90}>
-            {data.map((item) => <Cell key={item.name} fill={item.color} />)}
-          </Pie>
-          <Tooltip formatter={(value) => `R$ ${Number(value).toFixed(2)}`} />
-        </PieChart>
-      </ResponsiveContainer>
+      {data.length ? (
+        <ResponsiveContainer width="100%" height="88%">
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90}>
+              {data.map((item) => <Cell key={item.name} fill={item.color} />)}
+            </Pie>
+            <Tooltip formatter={(value) => `R$ ${Number(value).toFixed(2)}`} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[88%] items-center justify-center rounded-md border border-dashed border-black/15 text-center text-sm font-semibold text-ink/60">
+          Nenhuma despesa neste mês.
+        </div>
+      )}
     </div>
   );
 }

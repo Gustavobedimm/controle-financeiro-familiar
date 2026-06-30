@@ -53,36 +53,64 @@ export default function InvoicesPage() {
           {installments.loading ? <StateMessage title="Carregando fatura..." /> : null}
           {!installments.loading && invoiceItems.length === 0 ? <StateMessage title="Nenhuma parcela nesta fatura." /> : null}
           <div className="grid gap-3">
-            {invoiceItems.map((item) => (
-              <div key={item.id} className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <strong>{item.description}</strong>
-                  <p className="text-sm text-ink/60">{item.installmentNumber}/{item.totalInstallments} · vence {item.dueDate}</p>
+            {invoiceItems.map((item) => {
+              const card = cards.data.find((entry) => entry.id === item.cardId);
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  style={{ borderLeftColor: card?.color || undefined, borderLeftWidth: card ? 6 : undefined }}
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong>{item.description}</strong>
+                      {card ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.color }} />
+                          {card.name}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-sm text-ink/60">{item.installmentNumber}/{item.totalInstallments} · vence {item.dueDate}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <strong>{formatCurrency(item.amount)}</strong>
+                    <Badge tone={item.isPaid ? "good" : "warn"}>{item.isPaid ? "Pago" : "Aberto"}</Badge>
+                    {!item.isPaid ? (
+                      <Button variant="ghost" onClick={async () => { await updateInstallment(item.id, { isPaid: true, paidAt: todayIso() }); await installments.reload(); }}>
+                        <CheckCircle2 size={16} />
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <strong>{formatCurrency(item.amount)}</strong>
-                  <Badge tone={item.isPaid ? "good" : "warn"}>{item.isPaid ? "Pago" : "Aberto"}</Badge>
-                  {!item.isPaid ? (
-                    <Button variant="ghost" onClick={async () => { await updateInstallment(item.id, { isPaid: true, paidAt: todayIso() }); await installments.reload(); }}>
-                      <CheckCircle2 size={16} />
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
         <aside className="rounded-lg border border-black/10 bg-white p-4">
           <h2 className="mb-3 font-bold">Parcelamentos ativos</h2>
           <div className="grid gap-2">
             {futurePurchases.map((purchase) => {
+              const card = cards.data.find((entry) => entry.id === purchase.cardId);
               const last = installments.data
                 .filter((item) => item.purchaseId === purchase.id)
                 .sort((a, b) => a.invoiceYear - b.invoiceYear || a.invoiceMonth - b.invoiceMonth)
                 .at(-1);
               return (
-                <div key={purchase.id} className="rounded-md border border-black/10 p-3">
-                  <strong>{purchase.description}</strong>
+                <div
+                  key={purchase.id}
+                  className="rounded-md border border-black/10 p-3"
+                  style={{ borderLeftColor: card?.color || undefined, borderLeftWidth: card ? 6 : undefined }}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <strong>{purchase.description}</strong>
+                    {card ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.color }} />
+                        {card.name}
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="text-sm text-ink/60">Termina em {last ? `${String(last.invoiceMonth).padStart(2, "0")}/${last.invoiceYear}` : "-"}</p>
                 </div>
               );

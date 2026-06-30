@@ -6,7 +6,7 @@ import type {
   MonthReference,
   MonthlySummary
 } from "@/types/finance";
-import { addMonthsToReference, dateBelongsToMonth, isoDateForMonthDay, monthKey } from "./dates";
+import { addMonthsToReference, dateBelongsToMonth, isoDateForMonthDay, isPastDate, monthKey } from "./dates";
 import { roundMoney } from "./currency";
 
 function recurringStartedBefore(date: string, reference: MonthReference): boolean {
@@ -30,6 +30,7 @@ export function generateInstallments(input: {
   purchase: CreditCardPurchase;
   dueDay: number;
   createdAt: Date;
+  markPastDueAsPaid?: boolean;
 }): CreditCardInstallment[] {
   const baseAmount = Math.floor((input.purchase.totalAmount / input.purchase.installments) * 100) / 100;
   const remainder = roundMoney(input.purchase.totalAmount - baseAmount * input.purchase.installments);
@@ -38,6 +39,8 @@ export function generateInstallments(input: {
   return Array.from({ length: input.purchase.installments }, (_, index) => {
     const reference = addMonthsToReference({ month, year }, index);
     const amount = index === input.purchase.installments - 1 ? roundMoney(baseAmount + remainder) : baseAmount;
+    const dueDate = isoDateForMonthDay(reference, input.dueDay);
+    const isPaid = Boolean(input.markPastDueAsPaid && isPastDate(dueDate));
 
     return {
       id: `${input.purchase.id}-${index + 1}`,
@@ -51,8 +54,9 @@ export function generateInstallments(input: {
       amount,
       invoiceMonth: reference.month,
       invoiceYear: reference.year,
-      dueDate: isoDateForMonthDay(reference, input.dueDay),
-      isPaid: false,
+      dueDate,
+      isPaid,
+      ...(isPaid ? { paidAt: dueDate } : {}),
       categoryId: input.purchase.categoryId,
       createdAt: input.createdAt,
       updatedAt: input.createdAt

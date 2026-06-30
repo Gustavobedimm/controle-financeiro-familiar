@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Badge } from "@/components/ui/badge";
 import { usePersonalCollection } from "@/hooks/use-personal-collection";
-import { calculateMonthlySummary } from "@/lib/utils/calculations";
+import { calculateMonthlySummary, expenseOccursInMonth } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, nextMonths, readableMonth } from "@/lib/utils/dates";
 import type { CreditCardInstallment, Expense, ExpenseCategory, Income } from "@/types/finance";
@@ -43,15 +43,32 @@ export default function DashboardPage() {
     };
   });
 
-  const categoryData = categories.data
-    .map((category) => ({
-      name: category.name,
-      color: category.color,
-      value:
-        expenses.data.filter((expense) => expense.categoryId === category.id).reduce((total, expense) => total + expense.amount, 0) +
-        installments.data.filter((item) => item.categoryId === category.id).reduce((total, item) => total + item.amount, 0)
-    }))
-    .filter((item) => item.value > 0);
+  const categoryData = useMemo(() => {
+    const categoryMap = new Map(categories.data.map((category) => [category.id, category]));
+    const totals = new Map<string, { name: string; color: string; value: number }>();
+
+    function addValue(categoryId: string, amount: number) {
+      const category = categoryMap.get(categoryId);
+      const key = category?.id || "uncategorized";
+      const current = totals.get(key) || {
+        name: category?.name || "Sem categoria",
+        color: category?.color || "#94a3b8",
+        value: 0
+      };
+
+      totals.set(key, { ...current, value: current.value + amount });
+    }
+
+    expenses.data
+      .filter((expense) => expenseOccursInMonth(expense, reference))
+      .forEach((expense) => addValue(expense.categoryId, expense.amount));
+
+    installments.data
+      .filter((item) => item.invoiceMonth === reference.month && item.invoiceYear === reference.year)
+      .forEach((item) => addValue(item.categoryId, item.amount));
+
+    return Array.from(totals.values()).filter((item) => item.value > 0);
+  }, [categories.data, expenses.data, installments.data, reference]);
 
   const committedFuture = installments.data
     .filter((item) => item.invoiceYear > reference.year || (item.invoiceYear === reference.year && item.invoiceMonth > reference.month))

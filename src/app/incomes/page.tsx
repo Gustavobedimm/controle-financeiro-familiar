@@ -46,7 +46,7 @@ export default function IncomesPage() {
         <MonthSelector value={reference} onChange={setReference} />
       </PageHeader>
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-black/10 bg-white p-4" onSubmit={handleSubmit}>
+        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
           <Input label="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <MoneyInput label="Valor" value={form.amount} onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })} required />
           <Select label="Tipo" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as IncomeType })} options={[
@@ -57,15 +57,15 @@ export default function IncomesPage() {
           <Button><Plus size={18} /> {editingId ? "Salvar receita" : "Adicionar receita"}</Button>
         </form>
 
-        <section className="rounded-lg border border-black/10 bg-white p-4">
+        <section className="rounded-lg border border-border bg-card p-4">
           {loading ? <StateMessage title="Carregando receitas..." /> : null}
           {!loading && monthItems.length === 0 ? <StateMessage title="Nenhuma receita neste mês." description="Cadastre a primeira receita para calcular o saldo previsto." /> : null}
           <div className="grid gap-3">
             {monthItems.map((income) => (
-              <div key={income.id} className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div key={income.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <strong>{income.description}</strong>
-                  <p className="text-sm text-ink/60">{formatCurrency(income.amount)} · {income.receivedAt}</p>
+                  <p className="text-sm text-muted-foreground">{formatCurrency(income.amount)} · {income.receivedAt}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={income.isRecurring ? "good" : "neutral"}>{income.isRecurring ? "Recorrente" : "Única"}</Badge>

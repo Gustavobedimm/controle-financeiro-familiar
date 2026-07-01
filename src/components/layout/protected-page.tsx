@@ -14,7 +14,7 @@ export function ProtectedPage({ children }: { children: React.ReactNode }) {
     if (!loading && !firebaseUser) router.push("/auth/login");
   }, [firebaseUser, loading, router]);
 
-  if (loading) return <div className="grid min-h-screen place-items-center bg-paper text-ink">Carregando...</div>;
+  if (loading) return <div className="grid min-h-screen place-items-center bg-background text-foreground">Carregando...</div>;
   if (!firebaseUser) return <StateMessage title="Redirecionando para login..." />;
 
   return <AppShell>{children}</AppShell>;

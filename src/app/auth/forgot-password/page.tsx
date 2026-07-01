@@ -29,10 +29,10 @@ export default function ForgotPasswordPage() {
     <AuthCard title="Recuperar senha" subtitle="Receba um link para redefinir sua senha.">
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <Input label="E-mail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-        {message ? <p className="text-sm text-ink/70">{message}</p> : null}
+        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
         <Button disabled={loading}>{loading ? "Enviando..." : "Enviar link"}</Button>
       </form>
-      <Link className="mt-4 block text-sm font-semibold text-mint" href="/auth/login">Voltar ao login</Link>
+      <Link className="mt-4 block text-sm font-semibold text-primary" href="/auth/login">Voltar ao login</Link>
     </AuthCard>
   );
 }

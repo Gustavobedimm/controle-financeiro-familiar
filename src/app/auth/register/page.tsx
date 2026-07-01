@@ -59,7 +59,7 @@ export default function RegisterPage() {
         {warning ? <p className="rounded-md bg-accent/30 p-3 text-sm text-accent-foreground">{warning}</p> : null}
         <Button disabled={loading}>{loading ? "Criando..." : "Criar conta"}</Button>
       </form>
-      <Link className="mt-4 block text-sm font-semibold text-mint" href="/auth/login">Já tenho conta</Link>
+      <Link className="mt-4 block text-sm font-semibold text-primary" href="/auth/login">Já tenho conta</Link>
     </AuthCard>
   );
 }

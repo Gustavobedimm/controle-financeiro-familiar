@@ -34,12 +34,12 @@ export default function LoginPage() {
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <Input label="E-mail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         <Input label="Senha" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Button disabled={loading}>{loading ? "Entrando..." : "Entrar"}</Button>
       </form>
       <div className="mt-4 flex justify-between text-sm">
-        <Link className="font-semibold text-mint" href="/auth/register">Criar conta</Link>
-        <Link className="font-semibold text-ink/70" href="/auth/forgot-password">Esqueci a senha</Link>
+        <Link className="font-semibold text-primary" href="/auth/register">Criar conta</Link>
+        <Link className="font-semibold text-muted-foreground" href="/auth/forgot-password">Esqueci a senha</Link>
       </div>
     </AuthCard>
   );

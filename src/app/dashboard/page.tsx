@@ -87,7 +87,7 @@ export default function DashboardPage() {
       {!loading ? (
         <div className="grid gap-6">
           {summary.expectedBalance < 0 ? (
-            <div className="flex items-center gap-3 rounded-lg border border-coral/25 bg-coral/10 p-4 text-coral">
+            <div className="flex items-center gap-3 rounded-lg border border-destructive/25 bg-destructive/10 p-4 text-destructive">
               <AlertTriangle size={20} />
               <p className="text-sm font-semibold">Saldo previsto negativo para este mês.</p>
             </div>
@@ -102,16 +102,16 @@ export default function DashboardPage() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-black/10 bg-white p-4">
-              <p className="text-sm text-ink/60">Saldo real</p>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="text-sm text-muted-foreground">Saldo real</p>
               <strong className="mt-1 block text-2xl">{formatCurrency(summary.realBalance)}</strong>
             </div>
-            <div className="rounded-lg border border-black/10 bg-white p-4">
-              <p className="text-sm text-ink/60">Comprometido em parcelas futuras</p>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="text-sm text-muted-foreground">Comprometido em parcelas futuras</p>
               <strong className="mt-1 block text-2xl">{formatCurrency(committedFuture)}</strong>
             </div>
-            <div className="rounded-lg border border-black/10 bg-white p-4">
-              <p className="text-sm text-ink/60">Renda comprometida</p>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="text-sm text-muted-foreground">Renda comprometida</p>
               <strong className="mt-1 block text-2xl">
                 {summary.totalIncome ? Math.round(((summary.totalIncome - summary.expectedBalance) / summary.totalIncome) * 100) : 0}%
               </strong>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/firebase/auth";
 import { getDocument } from "@/lib/firebase/firestore";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { ThemeToggle } from "@/features/theme/theme-toggle";
 import type { Household } from "@/types/finance";
 
 const items = [
@@ -67,11 +68,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-paper lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="hidden border-r border-black/10 bg-white p-5 lg:block">
-        <div className="mb-8">
-          <strong className="text-lg text-ink">Finanças da Casa</strong>
-          <p className="text-sm text-ink/60">{appUser?.name || "Conta familiar"}</p>
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]">
+      <aside className="hidden border-r border-border bg-card p-5 lg:block">
+        <div className="mb-8 flex items-start justify-between gap-3">
+          <div>
+            <strong className="text-lg text-foreground">Finanças da Casa</strong>
+            <p className="text-sm text-muted-foreground">{appUser?.name || "Conta familiar"}</p>
+          </div>
+          <ThemeToggle className="min-h-9 px-2" />
         </div>
         <div className="mb-5">{identity}</div>
         <nav className="grid gap-1">
@@ -83,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition ${
-                  active ? "bg-mint/10 text-mint" : "text-ink/70 hover:bg-black/5"
+                  active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
                 }`}
               >
                 <Icon size={18} />
@@ -97,15 +101,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Button>
       </aside>
       <main className="pb-20 lg:pb-0">
-        <div className="border-b border-border bg-card px-4 py-3 lg:hidden">{identity}</div>
+        <div className="flex items-start gap-3 border-b border-border bg-card px-4 py-3 lg:hidden">
+          <div className="min-w-0 flex-1">{identity}</div>
+          <ThemeToggle className="min-h-9 px-2" />
+        </div>
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-10 border-t border-black/10 bg-white lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-10 border-t border-border bg-card lg:hidden">
         {items.map((item) => {
           const Icon = item.icon;
           const active = pathname.startsWith(item.href);
           return (
-            <Link key={item.href} href={item.href} className={`grid place-items-center py-3 ${active ? "text-mint" : "text-ink/55"}`}>
+            <Link key={item.href} href={item.href} className={`grid place-items-center py-3 ${active ? "text-primary" : "text-muted-foreground"}`}>
               <Icon size={20} />
             </Link>
           );

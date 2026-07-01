@@ -143,7 +143,7 @@ export default function QuickExpensesPage() {
       <PageHeader title="Lançamentos rápidos" description="Registre gastos simples no cartão ou direto como despesa paga." />
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-black/10 bg-white p-4" onSubmit={handleSubmit}>
+        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
           <Select
             label="Forma de pagamento"
             value={form.paymentMethod}
@@ -167,13 +167,13 @@ export default function QuickExpensesPage() {
           <Button disabled={saving || (form.paymentMethod === "credit" && !cards.data.length)}>
             <Plus size={18} /> {saving ? "Salvando..." : "Registrar lançamento"}
           </Button>
-          {message ? <p className="text-sm font-semibold text-mint">{message}</p> : null}
+          {message ? <p className="text-sm font-semibold text-primary">{message}</p> : null}
         </form>
 
         <section className="grid gap-4">
           {loading ? <StateMessage title="Carregando lançamentos..." /> : null}
 
-          <div className="rounded-lg border border-black/10 bg-white p-4">
+          <div className="rounded-lg border border-border bg-card p-4">
             <div className="mb-3 flex items-center gap-2">
               <ReceiptText size={18} />
               <h2 className="font-bold">Despesas diretas recentes</h2>
@@ -181,10 +181,10 @@ export default function QuickExpensesPage() {
             {directExpenses.length === 0 ? <StateMessage title="Nenhuma despesa direta recente." /> : null}
             <div className="grid gap-2">
               {directExpenses.map((expense) => (
-                <div key={expense.id} className="flex flex-col gap-2 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div key={expense.id} className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <strong>{expense.description}</strong>
-                    <p className="text-sm text-ink/60">{expense.dueDate}</p>
+                    <p className="text-sm text-muted-foreground">{expense.dueDate}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <strong>{formatCurrency(expense.amount)}</strong>
@@ -195,7 +195,7 @@ export default function QuickExpensesPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-black/10 bg-white p-4">
+          <div className="rounded-lg border border-border bg-card p-4">
             <div className="mb-3 flex items-center gap-2">
               <CreditCard size={18} />
               <h2 className="font-bold">Crédito à vista recente</h2>
@@ -207,20 +207,20 @@ export default function QuickExpensesPage() {
                 return (
                   <div
                     key={item.id}
-                    className="flex flex-col gap-2 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                     style={{ borderLeftColor: card?.color || undefined, borderLeftWidth: card ? 6 : undefined }}
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <strong>{item.description}</strong>
                         {card ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.color }} />
                             {card.name}
                           </span>
                         ) : null}
                       </div>
-                      <p className="text-sm text-ink/60">Fatura {String(item.invoiceMonth).padStart(2, "0")}/{item.invoiceYear}</p>
+                      <p className="text-sm text-muted-foreground">Fatura {String(item.invoiceMonth).padStart(2, "0")}/{item.invoiceYear}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <strong>{formatCurrency(item.amount)}</strong>
@@ -233,7 +233,7 @@ export default function QuickExpensesPage() {
           </div>
 
           {!loading && message ? (
-            <div className="flex items-center gap-2 rounded-lg border border-mint/25 bg-mint/10 p-4 text-sm font-semibold text-mint">
+            <div className="flex items-center gap-2 rounded-lg border border-primary/25 bg-primary/10 p-4 text-sm font-semibold text-primary">
               <CheckCircle2 size={18} /> {message}
             </div>
           ) : null}

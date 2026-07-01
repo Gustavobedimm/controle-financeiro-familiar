@@ -48,7 +48,7 @@ export default function ExpensesPage() {
         <MonthSelector value={reference} onChange={setReference} />
       </PageHeader>
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-black/10 bg-white p-4" onSubmit={handleSubmit}>
+        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
           <Input label="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <MoneyInput label="Valor" value={form.amount} onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })} required />
           <Select label="Tipo" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as ExpenseType })} options={[
@@ -60,15 +60,15 @@ export default function ExpensesPage() {
           <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isPaid} onChange={(event) => setForm({ ...form, isPaid: event.target.checked })} /> Pago</label>
           <Button><Plus size={18} /> {editingId ? "Salvar despesa" : "Adicionar despesa"}</Button>
         </form>
-        <section className="rounded-lg border border-black/10 bg-white p-4">
+        <section className="rounded-lg border border-border bg-card p-4">
           {expenses.loading ? <StateMessage title="Carregando despesas..." /> : null}
           {!expenses.loading && monthItems.length === 0 ? <StateMessage title="Nenhuma despesa neste mês." /> : null}
           <div className="grid gap-3">
             {monthItems.map((expense) => (
-              <div key={expense.id} className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div key={expense.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <strong>{expense.description}</strong>
-                  <p className="text-sm text-ink/60">{formatCurrency(expense.amount)} · {expense.dueDate}</p>
+                  <p className="text-sm text-muted-foreground">{formatCurrency(expense.amount)} · {expense.dueDate}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={expense.isPaid ? "good" : "warn"}>{expense.isPaid ? "Pago" : "Aberto"}</Badge>

@@ -112,7 +112,7 @@ export default function CardsPage() {
       <PageHeader title="Cartões de crédito" description="Cadastre cartões e compras parceladas com impacto nos meses futuros." />
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <div className="grid gap-6">
-          <form className="grid gap-4 rounded-lg border border-black/10 bg-white p-4" onSubmit={saveCard}>
+          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={saveCard}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-bold">{editingCardId ? "Editar cartão" : "Novo cartão"}</h2>
               {editingCardId ? (
@@ -128,7 +128,7 @@ export default function CardsPage() {
             <Input label="Cor" type="color" value={cardForm.color} onChange={(event) => setCardForm({ ...cardForm, color: event.target.value })} />
             <Button>{editingCardId ? <Pencil size={18} /> : <Plus size={18} />} {editingCardId ? "Salvar cartão" : "Adicionar cartão"}</Button>
           </form>
-          <form className="grid gap-4 rounded-lg border border-black/10 bg-white p-4" onSubmit={savePurchase}>
+          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={savePurchase}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-bold">{editingPurchaseId ? "Editar lançamento" : "Nova compra"}</h2>
               {editingPurchaseId ? (
@@ -160,13 +160,13 @@ export default function CardsPage() {
           {cards.data.map((card) => {
             const used = installments.data.filter((item) => item.cardId === card.id && !item.isPaid).reduce((total, item) => total + item.amount, 0);
             return (
-              <div key={card.id} className="rounded-lg border border-black/10 bg-white p-4">
+              <div key={card.id} className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <span className="mb-2 block h-2 w-20 rounded-full" style={{ background: card.color }} />
                     <strong>{card.name}</strong>
-                    <p className="text-sm text-ink/60">Fecha dia {card.closingDay} · Vence dia {card.dueDay}</p>
-                    <p className="text-sm text-ink/60">Limite {formatCurrency(card.limit)} · Em aberto {formatCurrency(used)}</p>
+                    <p className="text-sm text-muted-foreground">Fecha dia {card.closingDay} · Vence dia {card.dueDay}</p>
+                    <p className="text-sm text-muted-foreground">Limite {formatCurrency(card.limit)} · Em aberto {formatCurrency(used)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -191,7 +191,7 @@ export default function CardsPage() {
               </div>
             );
           })}
-          <div className="rounded-lg border border-black/10 bg-white p-4">
+          <div className="rounded-lg border border-border bg-card p-4">
             <h2 className="mb-3 font-bold">Compras parceladas</h2>
             <div className="grid gap-2">
               {purchases.data.map((purchase) => {
@@ -202,20 +202,20 @@ export default function CardsPage() {
                 return (
                 <div
                   key={purchase.id}
-                  className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                   style={{ borderLeftColor: purchaseCard?.color || undefined, borderLeftWidth: purchaseCard ? 6 : undefined }}
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <strong>{purchase.description}</strong>
                       {purchaseCard ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: purchaseCard.color }} />
                           {purchaseCard.name}
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-sm text-ink/60">
+                    <p className="text-sm text-muted-foreground">
                       {formatCurrency(purchase.totalAmount)} em {purchase.installments}x · {paidCount}/{purchase.installments} pagas
                     </p>
                     <p className="text-xs text-muted-foreground">Compra em {purchase.purchaseDate}</p>

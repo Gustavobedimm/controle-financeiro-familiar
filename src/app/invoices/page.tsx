@@ -40,10 +40,10 @@ export default function InvoicesPage() {
         </div>
       </PageHeader>
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <section className="rounded-lg border border-black/10 bg-white p-4">
+        <section className="rounded-lg border border-border bg-card p-4">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-ink/60">Total da fatura</p>
+              <p className="text-sm text-muted-foreground">Total da fatura</p>
               <strong className="text-3xl">{formatCurrency(total)}</strong>
             </div>
             <Button disabled={!invoiceItems.length} onClick={async () => { await markInvoiceAsPaid(invoiceItems); await installments.reload(); }}>
@@ -58,20 +58,20 @@ export default function InvoicesPage() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-md border border-black/10 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                   style={{ borderLeftColor: card?.color || undefined, borderLeftWidth: card ? 6 : undefined }}
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <strong>{item.description}</strong>
                       {card ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.color }} />
                           {card.name}
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-sm text-ink/60">{item.installmentNumber}/{item.totalInstallments} · vence {item.dueDate}</p>
+                    <p className="text-sm text-muted-foreground">{item.installmentNumber}/{item.totalInstallments} · vence {item.dueDate}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <strong>{formatCurrency(item.amount)}</strong>
@@ -87,7 +87,7 @@ export default function InvoicesPage() {
             })}
           </div>
         </section>
-        <aside className="rounded-lg border border-black/10 bg-white p-4">
+        <aside className="rounded-lg border border-border bg-card p-4">
           <h2 className="mb-3 font-bold">Parcelamentos ativos</h2>
           <div className="grid gap-2">
             {futurePurchases.map((purchase) => {
@@ -99,19 +99,19 @@ export default function InvoicesPage() {
               return (
                 <div
                   key={purchase.id}
-                  className="rounded-md border border-black/10 p-3"
+                  className="rounded-md border border-border p-3"
                   style={{ borderLeftColor: card?.color || undefined, borderLeftWidth: card ? 6 : undefined }}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <strong>{purchase.description}</strong>
                     {card ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs font-semibold text-ink/70">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
                         <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.color }} />
                         {card.name}
                       </span>
                     ) : null}
                   </div>
-                  <p className="text-sm text-ink/60">Termina em {last ? `${String(last.invoiceMonth).padStart(2, "0")}/${last.invoiceYear}` : "-"}</p>
+                  <p className="text-sm text-muted-foreground">Termina em {last ? `${String(last.invoiceMonth).padStart(2, "0")}/${last.invoiceYear}` : "-"}</p>
                 </div>
               );
             })}

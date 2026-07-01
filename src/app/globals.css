@@ -25,12 +25,39 @@
   background: hsl(var(--background));
 }
 
+.dark {
+  color-scheme: dark;
+  --background: 210 28% 8%;
+  --foreground: 210 28% 93%;
+  --card: 210 24% 12%;
+  --card-foreground: 210 28% 93%;
+  --primary: 168 72% 42%;
+  --primary-foreground: 210 28% 8%;
+  --secondary: 210 20% 88%;
+  --secondary-foreground: 210 28% 8%;
+  --muted: 210 20% 18%;
+  --muted-foreground: 210 14% 69%;
+  --accent: 37 88% 62%;
+  --accent-foreground: 210 28% 8%;
+  --destructive: 12 78% 64%;
+  --destructive-foreground: 210 28% 8%;
+  --border: 210 18% 22%;
+  --input: 210 18% 24%;
+  --ring: 168 72% 42%;
+  background: hsl(var(--background));
+}
+
 body {
   min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 * {
   box-sizing: border-box;
+}
+
+.recharts-legend-item-text {
+  color: hsl(var(--muted-foreground)) !important;
 }

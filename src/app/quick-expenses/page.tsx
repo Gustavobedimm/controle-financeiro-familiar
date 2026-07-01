@@ -4,6 +4,7 @@ import { CheckCircle2, CreditCard, Plus, ReceiptText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
 import { DatePicker } from "@/components/forms/date-picker";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
@@ -51,6 +52,7 @@ export default function QuickExpensesPage() {
   const expenses = usePersonalCollection<Expense>("expenses");
   const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const [form, setForm] = useState(blankForm);
+  const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -128,6 +130,7 @@ export default function QuickExpensesPage() {
       }
 
       resetForm();
+      setFormOpen(false);
       setMessage("Lançamento registrado.");
       await Promise.all([expenses.reload(), installments.reload()]);
     } finally {
@@ -140,10 +143,14 @@ export default function QuickExpensesPage() {
 
   return (
     <ProtectedPage>
-      <PageHeader title="Lançamentos rápidos" description="Registre gastos simples no cartão ou direto como despesa paga." />
+      <PageHeader title="Lançamentos rápidos" description="Registre gastos simples no cartão ou direto como despesa paga.">
+        <Button type="button" onClick={() => { resetForm(); setFormOpen(true); }}>
+          <Plus size={18} /> Novo lançamento
+        </Button>
+      </PageHeader>
 
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
+      <FloatingFormCard title="Novo lançamento rápido" open={formOpen} onOpenChange={setFormOpen}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <Select
             label="Forma de pagamento"
             value={form.paymentMethod}
@@ -169,7 +176,9 @@ export default function QuickExpensesPage() {
           </Button>
           {message ? <p className="text-sm font-semibold text-primary">{message}</p> : null}
         </form>
+      </FloatingFormCard>
 
+      <div className="grid gap-6">
         <section className="grid gap-4">
           {loading ? <StateMessage title="Carregando lançamentos..." /> : null}
 

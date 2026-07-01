@@ -3,6 +3,7 @@
 import { PiggyBank, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DatePicker } from "@/components/forms/date-picker";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
@@ -59,6 +60,8 @@ export default function SavingsPage() {
   const contributions = useHouseholdCollection<SavingsContribution>("savingsContributions");
   const [boxForm, setBoxForm] = useState(boxBlank);
   const [contributionForm, setContributionForm] = useState(contributionBlank);
+  const [boxFormOpen, setBoxFormOpen] = useState(false);
+  const [contributionFormOpen, setContributionFormOpen] = useState(false);
 
   const selectedBoxId = contributionForm.savingsBoxId || boxes.data[0]?.id || "";
   const selectedBox = boxes.data.find((box) => box.id === selectedBoxId);
@@ -93,6 +96,7 @@ export default function SavingsPage() {
       createdByUid: appUser.uid
     });
     setBoxForm(boxBlank);
+    setBoxFormOpen(false);
     await boxes.reload();
   }
 
@@ -110,16 +114,25 @@ export default function SavingsPage() {
       notes: contributionForm.notes || undefined
     });
     setContributionForm({ ...contributionBlank, savingsBoxId: selectedBoxId });
+    setContributionFormOpen(false);
     await contributions.reload();
   }
 
   return (
     <ProtectedPage>
-      <PageHeader title="Caixinhas" description="Acompanhe metas compartilhadas e aportes individuais para objetivos da família." />
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="grid gap-6">
-          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleCreateBox}>
-            <h2 className="flex items-center gap-2 font-bold"><PiggyBank size={18} /> Nova caixinha</h2>
+      <PageHeader title="Caixinhas" description="Acompanhe metas compartilhadas e aportes individuais para objetivos da família.">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => { setBoxForm(boxBlank); setBoxFormOpen(true); }}>
+            <PiggyBank size={18} /> Nova caixinha
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => { setContributionForm({ ...contributionBlank, savingsBoxId: selectedBoxId }); setContributionFormOpen(true); }} disabled={!selectedBoxId}>
+            <Plus size={18} /> Novo lançamento
+          </Button>
+        </div>
+      </PageHeader>
+
+      <FloatingFormCard title="Nova caixinha" open={boxFormOpen} onOpenChange={setBoxFormOpen}>
+          <form className="grid gap-4" onSubmit={handleCreateBox}>
             <Input label="Nome" value={boxForm.name} onChange={(event) => setBoxForm({ ...boxForm, name: event.target.value })} required />
             <MoneyInput label="Meta" value={boxForm.goalAmount} onChange={(event) => setBoxForm({ ...boxForm, goalAmount: Number(event.target.value) })} />
             <DatePicker label="Data alvo" value={boxForm.targetDate} onChange={(event) => setBoxForm({ ...boxForm, targetDate: event.target.value })} />
@@ -146,9 +159,10 @@ export default function SavingsPage() {
             <Input label="Observações" value={boxForm.notes} onChange={(event) => setBoxForm({ ...boxForm, notes: event.target.value })} />
             <Button><Plus size={18} /> Criar caixinha</Button>
           </form>
+      </FloatingFormCard>
 
-          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleCreateContribution}>
-            <h2 className="font-bold">Novo lançamento</h2>
+      <FloatingFormCard title="Novo lançamento" open={contributionFormOpen} onOpenChange={setContributionFormOpen}>
+          <form className="grid gap-4" onSubmit={handleCreateContribution}>
             <Select
               label="Caixinha"
               value={selectedBoxId}
@@ -170,8 +184,9 @@ export default function SavingsPage() {
             <Input label="Observação" value={contributionForm.notes} onChange={(event) => setContributionForm({ ...contributionForm, notes: event.target.value })} />
             <Button disabled={!selectedBoxId}><Plus size={18} /> Lançar na minha conta</Button>
           </form>
-        </div>
+      </FloatingFormCard>
 
+      <div className="grid gap-6">
         <section className="grid gap-4">
           {boxes.loading || contributions.loading ? <StateMessage title="Carregando caixinhas..." /> : null}
           {!boxes.loading && boxes.data.length === 0 ? (

@@ -3,6 +3,7 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DatePicker } from "@/components/forms/date-picker";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
 import { MonthSelector } from "@/components/forms/month-selector";
 import { PageHeader } from "@/components/layout/page-header";
@@ -26,6 +27,7 @@ export default function IncomesPage() {
   const { data, loading, reload, householdId, ownerUid } = usePersonalCollection<Income>("incomes");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const monthItems = useMemo(() => data.filter((income) => incomeOccursInMonth(income, reference)), [data, reference]);
 
@@ -37,16 +39,22 @@ export default function IncomesPage() {
     else await createIncome({ householdId, ownerUid, ...payload });
     setForm(blank);
     setEditingId(null);
+    setFormOpen(false);
     await reload();
   }
 
   return (
     <ProtectedPage>
       <PageHeader title="Receitas" description="Cadastre salários, rendas extras e receitas recorrentes.">
-        <MonthSelector value={reference} onChange={setReference} />
+        <div className="flex flex-wrap gap-2">
+          <MonthSelector value={reference} onChange={setReference} />
+          <Button type="button" onClick={() => { setEditingId(null); setForm(blank); setFormOpen(true); }}>
+            <Plus size={18} /> Nova receita
+          </Button>
+        </div>
       </PageHeader>
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
+      <FloatingFormCard title={editingId ? "Editar receita" : "Nova receita"} open={formOpen} onOpenChange={setFormOpen}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <Input label="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <MoneyInput label="Valor" value={form.amount} onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })} required />
           <Select label="Tipo" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as IncomeType })} options={[
@@ -56,7 +64,9 @@ export default function IncomesPage() {
           <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isRecurring} onChange={(event) => setForm({ ...form, isRecurring: event.target.checked })} /> Recorrente</label>
           <Button><Plus size={18} /> {editingId ? "Salvar receita" : "Adicionar receita"}</Button>
         </form>
+      </FloatingFormCard>
 
+      <div className="grid gap-6">
         <section className="rounded-lg border border-border bg-card p-4">
           {loading ? <StateMessage title="Carregando receitas..." /> : null}
           {!loading && monthItems.length === 0 ? <StateMessage title="Nenhuma receita neste mês." description="Cadastre a primeira receita para calcular o saldo previsto." /> : null}
@@ -69,7 +79,7 @@ export default function IncomesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={income.isRecurring ? "good" : "neutral"}>{income.isRecurring ? "Recorrente" : "Única"}</Badge>
-                  <Button variant="ghost" onClick={() => { setEditingId(income.id); setForm({ description: income.description, amount: income.amount, type: income.type, receivedAt: income.receivedAt, isRecurring: income.isRecurring }); }}><Pencil size={16} /></Button>
+                  <Button variant="ghost" onClick={() => { setEditingId(income.id); setForm({ description: income.description, amount: income.amount, type: income.type, receivedAt: income.receivedAt, isRecurring: income.isRecurring }); setFormOpen(true); }}><Pencil size={16} /></Button>
                   <Button variant="ghost" onClick={async () => { await deleteIncome(income.id); await reload(); }}><Trash2 size={16} /></Button>
                 </div>
               </div>

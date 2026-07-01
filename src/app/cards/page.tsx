@@ -1,9 +1,10 @@
 "use client";
 
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
 import { DatePicker } from "@/components/forms/date-picker";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
@@ -45,8 +46,10 @@ export default function CardsPage() {
   const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const [cardForm, setCardForm] = useState(blankCardForm);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [cardFormOpen, setCardFormOpen] = useState(false);
   const [purchaseForm, setPurchaseForm] = useState(blankPurchaseForm);
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+  const [purchaseFormOpen, setPurchaseFormOpen] = useState(false);
 
   function resetCardForm() {
     setCardForm(blankCardForm);
@@ -65,6 +68,7 @@ export default function CardsPage() {
     if (editingCardId) await updateCreditCard(editingCardId, payload);
     else await createCreditCard({ householdId: cards.householdId, ownerUid: cards.ownerUid, ...payload });
     resetCardForm();
+    setCardFormOpen(false);
     await cards.reload();
   }
 
@@ -104,23 +108,25 @@ export default function CardsPage() {
     }
 
     resetPurchaseForm();
+    setPurchaseFormOpen(false);
     await Promise.all([purchases.reload(), installments.reload()]);
   }
 
   return (
     <ProtectedPage>
-      <PageHeader title="Cartões de crédito" description="Cadastre cartões e compras parceladas com impacto nos meses futuros." />
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="grid gap-6">
-          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={saveCard}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-bold">{editingCardId ? "Editar cartão" : "Novo cartão"}</h2>
-              {editingCardId ? (
-                <Button type="button" variant="ghost" onClick={resetCardForm} aria-label="Cancelar edição do cartão">
-                  <X size={16} />
-                </Button>
-              ) : null}
-            </div>
+      <PageHeader title="Cartões de crédito" description="Cadastre cartões e compras parceladas com impacto nos meses futuros.">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => { resetCardForm(); setCardFormOpen(true); }}>
+            <Plus size={18} /> Novo cartão
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => { resetPurchaseForm(); setPurchaseFormOpen(true); }}>
+            <Plus size={18} /> Nova compra
+          </Button>
+        </div>
+      </PageHeader>
+
+      <FloatingFormCard title={editingCardId ? "Editar cartão" : "Novo cartão"} open={cardFormOpen} onOpenChange={setCardFormOpen}>
+          <form className="grid gap-4" onSubmit={saveCard}>
             <Input label="Nome" value={cardForm.name} onChange={(event) => setCardForm({ ...cardForm, name: event.target.value })} required />
             <MoneyInput label="Limite" value={cardForm.limit} onChange={(event) => setCardForm({ ...cardForm, limit: Number(event.target.value) })} />
             <Input label="Dia de fechamento" type="number" min={1} max={31} value={cardForm.closingDay} onChange={(event) => setCardForm({ ...cardForm, closingDay: Number(event.target.value) })} />
@@ -128,15 +134,10 @@ export default function CardsPage() {
             <Input label="Cor" type="color" value={cardForm.color} onChange={(event) => setCardForm({ ...cardForm, color: event.target.value })} />
             <Button>{editingCardId ? <Pencil size={18} /> : <Plus size={18} />} {editingCardId ? "Salvar cartão" : "Adicionar cartão"}</Button>
           </form>
-          <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={savePurchase}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-bold">{editingPurchaseId ? "Editar lançamento" : "Nova compra"}</h2>
-              {editingPurchaseId ? (
-                <Button type="button" variant="ghost" onClick={resetPurchaseForm} aria-label="Cancelar edição do lançamento">
-                  <X size={16} />
-                </Button>
-              ) : null}
-            </div>
+      </FloatingFormCard>
+
+      <FloatingFormCard title={editingPurchaseId ? "Editar lançamento" : "Nova compra"} open={purchaseFormOpen} onOpenChange={setPurchaseFormOpen}>
+          <form className="grid gap-4" onSubmit={savePurchase}>
             <Select label="Cartão" value={purchaseForm.cardId} onChange={(event) => setPurchaseForm({ ...purchaseForm, cardId: event.target.value })} options={cards.data.map((card) => ({ value: card.id, label: card.name }))} />
             <Input label="Descrição" value={purchaseForm.description} onChange={(event) => setPurchaseForm({ ...purchaseForm, description: event.target.value })} required />
             <MoneyInput label="Valor total" value={purchaseForm.totalAmount} onChange={(event) => setPurchaseForm({ ...purchaseForm, totalAmount: Number(event.target.value) })} />
@@ -154,7 +155,9 @@ export default function CardsPage() {
             </label>
             <Button>{editingPurchaseId ? <Pencil size={18} /> : <Plus size={18} />} {editingPurchaseId ? "Salvar lançamento" : "Gerar parcelas"}</Button>
           </form>
-        </div>
+      </FloatingFormCard>
+
+      <div className="grid gap-6">
         <section className="grid gap-4">
           {cards.loading ? <StateMessage title="Carregando cartões..." /> : null}
           {cards.data.map((card) => {
@@ -181,6 +184,7 @@ export default function CardsPage() {
                           dueDay: card.dueDay,
                           color: card.color
                         });
+                        setCardFormOpen(true);
                       }}
                     >
                       <Pencil size={16} />
@@ -262,6 +266,7 @@ export default function CardsPage() {
                           notes: purchase.notes || "",
                           markPastDueAsPaid: true
                         });
+                        setPurchaseFormOpen(true);
                       }}
                     >
                       <Pencil size={16} />

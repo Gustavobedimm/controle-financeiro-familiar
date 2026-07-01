@@ -1,26 +1,30 @@
 "use client";
 
-import { Banknote, CreditCard, Receipt, TrendingUp, Wallet } from "lucide-react";
+import { Banknote, Clipboard, CreditCard, Receipt, TrendingUp, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SummaryCard } from "@/components/cards/summary-card";
 import { MonthSelector } from "@/components/forms/month-selector";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { StateMessage } from "@/components/feedback/state-message";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useHouseholdCollection } from "@/hooks/use-household-collection";
+import { getDocument } from "@/lib/firebase/firestore";
 import { calculateMonthlySummary } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference } from "@/lib/utils/dates";
-import type { AppUser, CreditCard as CreditCardType, CreditCardInstallment, Expense, Income, SavingsContribution } from "@/types/finance";
+import type { AppUser, CreditCard as CreditCardType, CreditCardInstallment, Expense, Household, Income, SavingsContribution } from "@/types/finance";
 
 type HouseholdUser = AppUser & { id: string };
 
 export default function GroupPage() {
-  const { appUser } = useAuth();
+  const { appUser, householdId } = useAuth();
   const [reference, setReference] = useState(currentMonthReference());
   const [selectedUid, setSelectedUid] = useState("");
+  const [household, setHousehold] = useState<Household | null>(null);
+  const [copied, setCopied] = useState(false);
   const users = useHouseholdCollection<HouseholdUser>("users");
   const incomes = useHouseholdCollection<Income>("incomes");
   const expenses = useHouseholdCollection<Expense>("expenses");
@@ -31,6 +35,21 @@ export default function GroupPage() {
   useEffect(() => {
     if (!selectedUid && appUser?.uid) setSelectedUid(appUser.uid);
   }, [appUser, selectedUid]);
+
+  useEffect(() => {
+    async function loadHousehold() {
+      setHousehold(householdId ? await getDocument<Household>("households", householdId) : null);
+    }
+
+    void loadHousehold();
+  }, [householdId]);
+
+  async function copyHouseholdId() {
+    if (!householdId) return;
+    await navigator.clipboard.writeText(householdId);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
 
   const selectedUser = users.data.find((user) => user.uid === selectedUid) || appUser;
   const userIncomes = incomes.data.filter((item) => item.ownerUid === selectedUid);
@@ -67,30 +86,47 @@ export default function GroupPage() {
       {loading ? <StateMessage title="Carregando dados do grupo..." /> : null}
 
       {!loading ? (
-        <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-          <aside className="rounded-lg border border-border bg-card p-4">
-            <h2 className="mb-3 font-bold">Usuários no household</h2>
-            <div className="grid gap-2">
+        <div className="grid gap-6">
+          <section className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Household conectado</p>
+                <h2 className="mt-1 text-lg font-bold">{household?.name || "Grupo familiar"}</h2>
+                <div className="mt-2 flex max-w-xl items-start gap-2">
+                  <code className="min-w-0 flex-1 break-all rounded-sm bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                    {householdId || "Sem household"}
+                  </code>
+                  <Button className="min-h-8 px-2 py-1" variant="ghost" onClick={copyHouseholdId} disabled={!householdId} title="Copiar householdId">
+                    <Clipboard size={14} />
+                  </Button>
+                </div>
+                {copied ? <p className="mt-1 text-xs font-semibold text-primary">ID copiado.</p> : null}
+              </div>
+              <div className="text-sm text-muted-foreground">{users.data.length} pessoas</div>
+            </div>
+
+            <h3 className="mb-2 font-bold">Usuários no household</h3>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {users.data.map((user) => {
                 const active = user.uid === selectedUid;
                 return (
                   <button
                     key={user.uid}
-                    className={`rounded-md border p-3 text-left transition ${
+                    className={`flex min-w-0 items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition ${
                       active ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
                     }`}
                     onClick={() => setSelectedUid(user.uid)}
                   >
-                    <strong className="block">{user.name}</strong>
-                    <span className="text-xs text-muted-foreground">{user.email}</span>
-                    <span className="mt-2 block">
-                      <Badge tone={user.uid === appUser?.uid ? "good" : "neutral"}>{user.uid === appUser?.uid ? "Você" : user.role}</Badge>
+                    <span className="min-w-0">
+                      <strong className="block truncate text-sm">{user.name}</strong>
+                      <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
                     </span>
+                    <Badge tone={user.uid === appUser?.uid ? "good" : "neutral"}>{user.uid === appUser?.uid ? "Você" : user.role}</Badge>
                   </button>
                 );
               })}
             </div>
-          </aside>
+          </section>
 
           <section className="grid gap-6">
             <div>

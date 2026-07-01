@@ -2,6 +2,7 @@
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export default function CategoriesPage() {
   const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   function categoryIsUsed(id: string) {
     return expenses.data.some((expense) => expense.categoryId === id) || installments.data.some((item) => item.categoryId === id);
@@ -33,14 +35,19 @@ export default function CategoriesPage() {
     else await createCategory({ householdId: categories.householdId, ownerUid: categories.ownerUid, ...form });
     setForm(blank);
     setEditingId(null);
+    setFormOpen(false);
     await categories.reload();
   }
 
   return (
     <ProtectedPage>
-      <PageHeader title="Categorias" description="Organize os gastos por tipo, cor e ícone." />
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
+      <PageHeader title="Categorias" description="Organize os gastos por tipo, cor e ícone.">
+        <Button type="button" onClick={() => { setEditingId(null); setForm(blank); setFormOpen(true); }}>
+          <Plus size={18} /> Nova categoria
+        </Button>
+      </PageHeader>
+      <FloatingFormCard title={editingId ? "Editar categoria" : "Nova categoria"} open={formOpen} onOpenChange={setFormOpen}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <Input label="Nome" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
           <Select
             label="Tipo"
@@ -57,6 +64,9 @@ export default function CategoriesPage() {
           <Input label="Cor" type="color" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} />
           <Button><Plus size={18} /> {editingId ? "Salvar categoria" : "Adicionar categoria"}</Button>
         </form>
+      </FloatingFormCard>
+
+      <div className="grid gap-6">
         <section className="rounded-lg border border-border bg-card p-4">
           {categories.loading ? <StateMessage title="Carregando categorias..." /> : null}
           <div className="grid gap-3 md:grid-cols-2">
@@ -71,7 +81,7 @@ export default function CategoriesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge>{category.type}</Badge>
-                    <Button variant="ghost" onClick={() => { setEditingId(category.id); setForm({ name: category.name, type: category.type, color: category.color, icon: category.icon }); }}><Pencil size={16} /></Button>
+                    <Button variant="ghost" onClick={() => { setEditingId(category.id); setForm({ name: category.name, type: category.type, color: category.color, icon: category.icon }); setFormOpen(true); }}><Pencil size={16} /></Button>
                     <Button variant="ghost" disabled={used} onClick={async () => { await deleteCategory(category.id); await categories.reload(); }}><Trash2 size={16} /></Button>
                   </div>
                 </div>

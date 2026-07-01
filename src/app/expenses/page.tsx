@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
 import { DatePicker } from "@/components/forms/date-picker";
+import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
 import { MonthSelector } from "@/components/forms/month-selector";
 import { PageHeader } from "@/components/layout/page-header";
@@ -28,6 +29,7 @@ export default function ExpensesPage() {
   const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const monthItems = useMemo(() => expenses.data.filter((expense) => expenseOccursInMonth(expense, reference)), [expenses.data, reference]);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -39,16 +41,22 @@ export default function ExpensesPage() {
     else await createExpense({ householdId: expenses.householdId, ownerUid: expenses.ownerUid, ...payload });
     setForm(blank);
     setEditingId(null);
+    setFormOpen(false);
     await expenses.reload();
   }
 
   return (
     <ProtectedPage>
       <PageHeader title="Despesas" description="Controle gastos fixos e do dia a dia.">
-        <MonthSelector value={reference} onChange={setReference} />
+        <div className="flex flex-wrap gap-2">
+          <MonthSelector value={reference} onChange={setReference} />
+          <Button type="button" onClick={() => { setEditingId(null); setForm(blank); setFormOpen(true); }}>
+            <Plus size={18} /> Nova despesa
+          </Button>
+        </div>
       </PageHeader>
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form className="grid gap-4 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
+      <FloatingFormCard title={editingId ? "Editar despesa" : "Nova despesa"} open={formOpen} onOpenChange={setFormOpen}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <Input label="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <MoneyInput label="Valor" value={form.amount} onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })} required />
           <Select label="Tipo" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as ExpenseType })} options={[
@@ -60,6 +68,9 @@ export default function ExpensesPage() {
           <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isPaid} onChange={(event) => setForm({ ...form, isPaid: event.target.checked })} /> Pago</label>
           <Button><Plus size={18} /> {editingId ? "Salvar despesa" : "Adicionar despesa"}</Button>
         </form>
+      </FloatingFormCard>
+
+      <div className="grid gap-6">
         <section className="rounded-lg border border-border bg-card p-4">
           {expenses.loading ? <StateMessage title="Carregando despesas..." /> : null}
           {!expenses.loading && monthItems.length === 0 ? <StateMessage title="Nenhuma despesa neste mês." /> : null}
@@ -72,7 +83,7 @@ export default function ExpensesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={expense.isPaid ? "good" : "warn"}>{expense.isPaid ? "Pago" : "Aberto"}</Badge>
-                  <Button variant="ghost" onClick={() => { setEditingId(expense.id); setForm({ description: expense.description, amount: expense.amount, categoryId: expense.categoryId, type: expense.type, dueDate: expense.dueDate, isPaid: expense.isPaid, isRecurring: expense.isRecurring, notes: expense.notes || "" }); }}><Pencil size={16} /></Button>
+                  <Button variant="ghost" onClick={() => { setEditingId(expense.id); setForm({ description: expense.description, amount: expense.amount, categoryId: expense.categoryId, type: expense.type, dueDate: expense.dueDate, isPaid: expense.isPaid, isRecurring: expense.isRecurring, notes: expense.notes || "" }); setFormOpen(true); }}><Pencil size={16} /></Button>
                   <Button variant="ghost" onClick={async () => { await deleteExpense(expense.id); await expenses.reload(); }}><Trash2 size={16} /></Button>
                 </div>
               </div>

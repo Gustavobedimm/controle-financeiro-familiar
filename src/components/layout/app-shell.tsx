@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { BarChart3, Clipboard, CreditCard, FolderOpen, Home, LogOut, PiggyBank, Receipt, ReceiptText, TrendingUp, Users, WalletCards } from "lucide-react";
+import { BarChart3, CreditCard, FolderOpen, Home, LogOut, PiggyBank, Receipt, ReceiptText, TrendingUp, Users, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/firebase/auth";
-import { getDocument } from "@/lib/firebase/firestore";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ThemeToggle } from "@/features/theme/theme-toggle";
-import type { Household } from "@/types/finance";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -27,45 +24,12 @@ const items = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { appUser, householdId } = useAuth();
-  const [household, setHousehold] = useState<Household | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    async function loadHousehold() {
-      setHousehold(householdId ? await getDocument<Household>("households", householdId) : null);
-    }
-
-    void loadHousehold();
-  }, [householdId]);
+  const { appUser } = useAuth();
 
   async function handleLogout() {
     await logout();
     router.push("/auth/login");
   }
-
-  async function copyHouseholdId() {
-    if (!householdId) return;
-    await navigator.clipboard.writeText(householdId);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
-
-  const identity = (
-    <div className="rounded-md border border-border bg-muted/45 p-3">
-      <p className="text-xs font-semibold uppercase text-muted-foreground">Household conectado</p>
-      <p className="mt-1 text-sm font-bold text-foreground">{household?.name || "Grupo familiar"}</p>
-      <div className="mt-2 flex items-start gap-2">
-        <code className="min-w-0 flex-1 break-all rounded-sm bg-card px-2 py-1 text-[11px] text-muted-foreground">
-          {householdId || "Sem household"}
-        </code>
-        <Button className="min-h-8 px-2 py-1" variant="ghost" onClick={copyHouseholdId} disabled={!householdId} title="Copiar householdId">
-          <Clipboard size={14} />
-        </Button>
-      </div>
-      {copied ? <p className="mt-1 text-xs font-semibold text-primary">ID copiado.</p> : null}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]">
@@ -77,7 +41,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <ThemeToggle className="min-h-9 px-2" />
         </div>
-        <div className="mb-5">{identity}</div>
         <nav className="grid gap-1">
           {items.map((item) => {
             const active = pathname.startsWith(item.href);
@@ -101,8 +64,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Button>
       </aside>
       <main className="pb-20 lg:pb-0">
-        <div className="flex items-start gap-3 border-b border-border bg-card px-4 py-3 lg:hidden">
-          <div className="min-w-0 flex-1">{identity}</div>
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 lg:hidden">
+          <div>
+            <strong className="text-base text-foreground">Finanças da Casa</strong>
+            <p className="text-sm text-muted-foreground">{appUser?.name || "Conta familiar"}</p>
+          </div>
           <ThemeToggle className="min-h-9 px-2" />
         </div>
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>

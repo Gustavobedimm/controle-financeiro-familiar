@@ -15,7 +15,7 @@ import { getDocument } from "@/lib/firebase/firestore";
 import { calculateMonthlySummary } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference } from "@/lib/utils/dates";
-import type { AppUser, CreditCard as CreditCardType, CreditCardInstallment, Expense, Household, Income, SavingsContribution } from "@/types/finance";
+import type { AppUser, CreditCard as CreditCardType, CreditCardInstallment, Expense, ExpensePayment, Household, Income, SavingsContribution } from "@/types/finance";
 
 type HouseholdUser = AppUser & { id: string };
 
@@ -28,6 +28,7 @@ export default function GroupPage() {
   const users = useHouseholdCollection<HouseholdUser>("users");
   const incomes = useHouseholdCollection<Income>("incomes");
   const expenses = useHouseholdCollection<Expense>("expenses");
+  const expensePayments = useHouseholdCollection<ExpensePayment>("expensePayments");
   const cards = useHouseholdCollection<CreditCardType>("creditCards");
   const installments = useHouseholdCollection<CreditCardInstallment>("creditCardInstallments");
   const savingsContributions = useHouseholdCollection<SavingsContribution>("savingsContributions");
@@ -54,6 +55,7 @@ export default function GroupPage() {
   const selectedUser = users.data.find((user) => user.uid === selectedUid) || appUser;
   const userIncomes = incomes.data.filter((item) => item.ownerUid === selectedUid);
   const userExpenses = expenses.data.filter((item) => item.ownerUid === selectedUid);
+  const userExpensePayments = expensePayments.data.filter((item) => item.ownerUid === selectedUid);
   const userCards = cards.data.filter((item) => item.ownerUid === selectedUid);
   const userInstallments = installments.data.filter((item) => item.ownerUid === selectedUid);
   const userSavings = savingsContributions.data.filter((item) => item.createdByUid === selectedUid);
@@ -64,9 +66,10 @@ export default function GroupPage() {
         reference,
         incomes: userIncomes,
         expenses: userExpenses,
+        expensePayments: userExpensePayments,
         installments: userInstallments
       }),
-    [reference, userExpenses, userIncomes, userInstallments]
+    [reference, userExpensePayments, userExpenses, userIncomes, userInstallments]
   );
 
   const cardOpenAmounts = userCards.map((card) => ({
@@ -75,7 +78,14 @@ export default function GroupPage() {
   }));
 
   const savingsTotal = userSavings.reduce((sum, item) => sum + (item.type === "withdrawal" ? -item.amount : item.amount), 0);
-  const loading = users.loading || incomes.loading || expenses.loading || cards.loading || installments.loading || savingsContributions.loading;
+  const loading =
+    users.loading ||
+    incomes.loading ||
+    expenses.loading ||
+    expensePayments.loading ||
+    cards.loading ||
+    installments.loading ||
+    savingsContributions.loading;
 
   return (
     <ProtectedPage>

@@ -68,6 +68,19 @@ export interface Expense {
   updatedAt: TimestampLike;
 }
 
+export interface ExpensePayment {
+  id: string;
+  householdId: string;
+  ownerUid: string;
+  expenseId: string;
+  month: number;
+  year: number;
+  isPaid: boolean;
+  paidAt?: string;
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
+}
+
 export interface CreditCard {
   id: string;
   householdId: string;

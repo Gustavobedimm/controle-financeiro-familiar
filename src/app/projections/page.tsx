@@ -12,21 +12,28 @@ import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { calculateMonthlySummary } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, nextMonths, readableMonth } from "@/lib/utils/dates";
-import type { CreditCardInstallment, CreditCardPurchase, Expense, Income } from "@/types/finance";
+import type { CreditCardInstallment, CreditCardPurchase, Expense, ExpensePayment, Income } from "@/types/finance";
 
 export default function ProjectionsPage() {
   const [reference, setReference] = useState(currentMonthReference());
   const incomes = usePersonalCollection<Income>("incomes");
   const expenses = usePersonalCollection<Expense>("expenses");
+  const expensePayments = usePersonalCollection<ExpensePayment>("expensePayments");
   const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const purchases = usePersonalCollection<CreditCardPurchase>("creditCardPurchases");
 
   const rows = useMemo(
     () =>
       nextMonths(reference, 12).map((month) =>
-        calculateMonthlySummary({ reference: month, incomes: incomes.data, expenses: expenses.data, installments: installments.data })
+        calculateMonthlySummary({
+          reference: month,
+          incomes: incomes.data,
+          expenses: expenses.data,
+          expensePayments: expensePayments.data,
+          installments: installments.data
+        })
       ),
-    [expenses.data, incomes.data, installments.data, reference]
+    [expensePayments.data, expenses.data, incomes.data, installments.data, reference]
   );
 
   const chartData = rows.map((row) => ({
@@ -46,7 +53,7 @@ export default function ProjectionsPage() {
     })
     .filter((item) => item.last);
 
-  const loading = incomes.loading || expenses.loading || installments.loading || purchases.loading;
+  const loading = incomes.loading || expenses.loading || expensePayments.loading || installments.loading || purchases.loading;
 
   return (
     <ProtectedPage>

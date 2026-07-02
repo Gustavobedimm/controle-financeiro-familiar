@@ -13,12 +13,13 @@ import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { calculateMonthlySummary, expenseOccursInMonth } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, nextMonths, readableMonth } from "@/lib/utils/dates";
-import type { CreditCardInstallment, Expense, ExpenseCategory, Income } from "@/types/finance";
+import type { CreditCardInstallment, Expense, ExpenseCategory, ExpensePayment, Income } from "@/types/finance";
 
 export default function DashboardPage() {
   const [reference, setReference] = useState(currentMonthReference());
   const incomes = usePersonalCollection<Income>("incomes");
   const expenses = usePersonalCollection<Expense>("expenses");
+  const expensePayments = usePersonalCollection<ExpensePayment>("expensePayments");
   const installments = usePersonalCollection<CreditCardInstallment>("creditCardInstallments");
   const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
 
@@ -28,13 +29,20 @@ export default function DashboardPage() {
         reference,
         incomes: incomes.data,
         expenses: expenses.data,
+        expensePayments: expensePayments.data,
         installments: installments.data
       }),
-    [expenses.data, incomes.data, installments.data, reference]
+    [expensePayments.data, expenses.data, incomes.data, installments.data, reference]
   );
 
   const projectionData = nextMonths(reference, 6).map((month) => {
-    const item = calculateMonthlySummary({ reference: month, incomes: incomes.data, expenses: expenses.data, installments: installments.data });
+    const item = calculateMonthlySummary({
+      reference: month,
+      incomes: incomes.data,
+      expenses: expenses.data,
+      expensePayments: expensePayments.data,
+      installments: installments.data
+    });
     return {
       month: readableMonth(month).slice(0, 3),
       receitas: item.totalIncome,
@@ -74,7 +82,7 @@ export default function DashboardPage() {
     .filter((item) => item.invoiceYear > reference.year || (item.invoiceYear === reference.year && item.invoiceMonth > reference.month))
     .reduce((total, item) => total + item.amount, 0);
 
-  const loading = incomes.loading || expenses.loading || installments.loading || categories.loading;
+  const loading = incomes.loading || expenses.loading || expensePayments.loading || installments.loading || categories.loading;
 
   return (
     <ProtectedPage>

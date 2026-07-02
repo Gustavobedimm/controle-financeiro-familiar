@@ -2,6 +2,7 @@ import type {
   CreditCardInstallment,
   CreditCardPurchase,
   Expense,
+  ExpensePayment,
   Income,
   MonthReference,
   MonthlySummary
@@ -24,6 +25,24 @@ export function incomeOccursInMonth(income: Income, reference: MonthReference): 
 export function expenseOccursInMonth(expense: Expense, reference: MonthReference): boolean {
   if (dateBelongsToMonth(expense.dueDate, reference)) return true;
   return expense.isRecurring && recurringStartedBefore(expense.dueDate, reference);
+}
+
+export function expenseDueDateInMonth(expense: Expense, reference: MonthReference): string {
+  if (!expense.isRecurring) return expense.dueDate;
+  return isoDateForMonthDay(reference, expense.recurrenceDay || new Date(`${expense.dueDate}T00:00:00`).getDate());
+}
+
+export function findExpensePayment(
+  payments: ExpensePayment[],
+  expenseId: string,
+  reference: MonthReference
+): ExpensePayment | undefined {
+  return payments.find((payment) => payment.expenseId === expenseId && payment.month === reference.month && payment.year === reference.year);
+}
+
+export function isExpensePaidInMonth(expense: Expense, reference: MonthReference, payments: ExpensePayment[] = []): boolean {
+  if (!expense.isRecurring) return expense.isPaid;
+  return Boolean(findExpensePayment(payments, expense.id, reference)?.isPaid);
 }
 
 export function generateInstallments(input: {
@@ -68,6 +87,7 @@ export function calculateMonthlySummary(params: {
   reference: MonthReference;
   incomes: Income[];
   expenses: Expense[];
+  expensePayments?: ExpensePayment[];
   installments: CreditCardInstallment[];
 }): MonthlySummary {
   const monthIncomes = params.incomes.filter((income) => incomeOccursInMonth(income, params.reference));
@@ -85,7 +105,9 @@ export function calculateMonthlySummary(params: {
   );
   const totalCreditCardExpenses = roundMoney(monthInstallments.reduce((total, item) => total + item.amount, 0));
   const expectedBalance = roundMoney(totalIncome - totalFixedExpenses - totalVariableExpenses - totalCreditCardExpenses);
-  const paidExpenses = monthExpenses.filter((expense) => expense.isPaid).reduce((total, expense) => total + expense.amount, 0);
+  const paidExpenses = monthExpenses
+    .filter((expense) => isExpensePaidInMonth(expense, params.reference, params.expensePayments))
+    .reduce((total, expense) => total + expense.amount, 0);
   const paidInstallments = monthInstallments
     .filter((installment) => installment.isPaid)
     .reduce((total, installment) => total + installment.amount, 0);

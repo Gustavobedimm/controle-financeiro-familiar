@@ -14,18 +14,32 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { StateMessage } from "@/components/feedback/state-message";
-import { createExpense, deleteExpense, markExpenseAsOpen, markExpenseAsPaid, updateExpense } from "@/features/expenses/services/expense-service";
+import {
+  createExpense,
+  deleteExpense,
+  markExpenseAsOpen,
+  markExpenseAsPaid,
+  markExpenseMonthAsOpen,
+  markExpenseMonthAsPaid,
+  updateExpense
+} from "@/features/expenses/services/expense-service";
 import { usePersonalCollection } from "@/hooks/use-personal-collection";
-import { expenseOccursInMonth } from "@/lib/utils/calculations";
+import { expenseDueDateInMonth, expenseOccursInMonth, isExpensePaidInMonth } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
 import { currentMonthReference, todayIso } from "@/lib/utils/dates";
-import type { Expense, ExpenseCategory, ExpenseType } from "@/types/finance";
+import type { Expense, ExpenseCategory, ExpensePayment, ExpenseType, MonthReference } from "@/types/finance";
 
 const blank = { description: "", amount: 0, categoryId: "", type: "fixed" as ExpenseType, dueDate: todayIso(), isPaid: false, isRecurring: true, notes: "" };
+
+function referenceFromIso(date: string): MonthReference {
+  const parsedDate = new Date(`${date}T00:00:00`);
+  return { month: parsedDate.getMonth() + 1, year: parsedDate.getFullYear() };
+}
 
 export default function ExpensesPage() {
   const [reference, setReference] = useState(currentMonthReference());
   const expenses = usePersonalCollection<Expense>("expenses");
+  const payments = usePersonalCollection<ExpensePayment>("expensePayments");
   const categories = usePersonalCollection<ExpenseCategory>("expenseCategories");
   const [form, setForm] = useState(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -36,27 +50,65 @@ export default function ExpensesPage() {
     event.preventDefault();
     if (!expenses.householdId || !expenses.ownerUid) return;
     const categoryId = form.categoryId || categories.data[0]?.id || "";
-    const payload = { ...form, categoryId, amount: Number(form.amount), recurrenceDay: new Date(`${form.dueDate}T00:00:00`).getDate() };
+    const payload = {
+      ...form,
+      categoryId,
+      amount: Number(form.amount),
+      isPaid: form.isRecurring ? false : form.isPaid,
+      recurrenceDay: new Date(`${form.dueDate}T00:00:00`).getDate()
+    };
     if (editingId) {
       await updateExpense(editingId, payload);
-      if (form.isPaid) await markExpenseAsPaid(editingId);
+      const expense = expenses.data.find((item) => item.id === editingId);
+      if (expense?.isRecurring || form.isRecurring) {
+        const updatedExpense = {
+          ...expense,
+          ...payload,
+          id: editingId,
+          householdId: expense?.householdId || expenses.householdId,
+          ownerUid: expense?.ownerUid || expenses.ownerUid
+        } as Expense;
+        if (form.isPaid) await markExpenseMonthAsPaid({ expense: updatedExpense, reference });
+        else await markExpenseMonthAsOpen({ expense: updatedExpense, reference });
+      } else if (form.isPaid) await markExpenseAsPaid(editingId);
       else await markExpenseAsOpen(editingId);
     } else {
-      await createExpense({
+      const expenseId = await createExpense({
         householdId: expenses.householdId,
         ownerUid: expenses.ownerUid,
         ...payload,
-        ...(form.isPaid ? { paidAt: todayIso() } : {})
+        ...(!form.isRecurring && form.isPaid ? { paidAt: todayIso() } : {})
       });
+      if (form.isRecurring && form.isPaid) {
+        await markExpenseMonthAsPaid({
+          expense: {
+            id: expenseId,
+            householdId: expenses.householdId,
+            ownerUid: expenses.ownerUid,
+            ...payload,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          reference: referenceFromIso(form.dueDate)
+        });
+      }
     }
     setForm(blank);
     setEditingId(null);
     setFormOpen(false);
-    await expenses.reload();
+    await Promise.all([expenses.reload(), payments.reload()]);
   }
 
   async function togglePaid(expense: Expense) {
-    if (expense.isPaid) await markExpenseAsOpen(expense.id);
+    const isPaid = isExpensePaidInMonth(expense, reference, payments.data);
+    if (expense.isRecurring) {
+      if (isPaid) await markExpenseMonthAsOpen({ expense, reference });
+      else await markExpenseMonthAsPaid({ expense, reference, paidAt: expenseDueDateInMonth(expense, reference) });
+      await payments.reload();
+      return;
+    }
+
+    if (isPaid) await markExpenseAsOpen(expense.id);
     else await markExpenseAsPaid(expense.id);
     await expenses.reload();
   }
@@ -88,26 +140,31 @@ export default function ExpensesPage() {
 
       <div className="grid gap-6">
         <section className="rounded-lg border border-border bg-card p-4">
-          {expenses.loading ? <StateMessage title="Carregando despesas..." /> : null}
-          {!expenses.loading && monthItems.length === 0 ? <StateMessage title="Nenhuma despesa neste mês." /> : null}
+          {expenses.loading || payments.loading ? <StateMessage title="Carregando despesas..." /> : null}
+          {!expenses.loading && !payments.loading && monthItems.length === 0 ? <StateMessage title="Nenhuma despesa neste mês." /> : null}
           <div className="grid gap-3">
-            {monthItems.map((expense) => (
-              <div key={expense.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <strong>{expense.description}</strong>
-                  <p className="text-sm text-muted-foreground">{formatCurrency(expense.amount)} · {expense.dueDate}</p>
+            {monthItems.map((expense) => {
+              const isPaid = isExpensePaidInMonth(expense, reference, payments.data);
+              const dueDate = expenseDueDateInMonth(expense, reference);
+
+              return (
+                <div key={expense.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <strong>{expense.description}</strong>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(expense.amount)} · {dueDate}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={isPaid ? "good" : "warn"}>{isPaid ? "Pago" : "Aberto"}</Badge>
+                    <Button variant="ghost" onClick={() => togglePaid(expense)}>
+                      {isPaid ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                      {isPaid ? "Abrir" : "Pagar"}
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setEditingId(expense.id); setForm({ description: expense.description, amount: expense.amount, categoryId: expense.categoryId, type: expense.type, dueDate: expense.dueDate, isPaid, isRecurring: expense.isRecurring, notes: expense.notes || "" }); setFormOpen(true); }}><Pencil size={16} /></Button>
+                    <Button variant="ghost" onClick={async () => { await deleteExpense(expense.id); await expenses.reload(); }}><Trash2 size={16} /></Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge tone={expense.isPaid ? "good" : "warn"}>{expense.isPaid ? "Pago" : "Aberto"}</Badge>
-                  <Button variant="ghost" onClick={() => togglePaid(expense)}>
-                    {expense.isPaid ? <Circle size={16} /> : <CheckCircle2 size={16} />}
-                    {expense.isPaid ? "Abrir" : "Pagar"}
-                  </Button>
-                  <Button variant="ghost" onClick={() => { setEditingId(expense.id); setForm({ description: expense.description, amount: expense.amount, categoryId: expense.categoryId, type: expense.type, dueDate: expense.dueDate, isPaid: expense.isPaid, isRecurring: expense.isRecurring, notes: expense.notes || "" }); setFormOpen(true); }}><Pencil size={16} /></Button>
-                  <Button variant="ghost" onClick={async () => { await deleteExpense(expense.id); await expenses.reload(); }}><Trash2 size={16} /></Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>

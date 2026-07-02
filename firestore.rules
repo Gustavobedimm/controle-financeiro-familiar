@@ -54,22 +54,22 @@ service cloud.firestore {
     match /{collection}/{docId} {
       allow read: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
-        "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+        "expensePayments", "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
       ] && readsHouseholdResource();
 
       allow create: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
-        "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+        "expensePayments", "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
       ] && writesPersonalResource();
 
       allow update: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
-        "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+        "expensePayments", "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
       ] && ownsPersonalResource() && writesPersonalResource();
 
       allow delete: if collection in [
         "incomes", "expenseCategories", "expenses", "creditCards",
-        "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
+        "expensePayments", "creditCardPurchases", "creditCardInstallments", "monthlyClosings"
       ] && ownsPersonalResource();
 
       allow read: if collection in [

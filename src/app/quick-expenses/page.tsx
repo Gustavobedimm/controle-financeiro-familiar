@@ -1,5 +1,6 @@
 "use client";
 
+import { addMonths, format, isValid, parseISO } from "date-fns";
 import { CheckCircle2, CreditCard, Plus, ReceiptText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
@@ -14,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StateMessage } from "@/components/feedback/state-message";
 import { createPurchaseWithInstallments } from "@/features/credit-cards/services/card-service";
-import { createExpense } from "@/features/expenses/services/expense-service";
+import { createExpense, markExpenseAsOpen, markExpenseAsPaid } from "@/features/expenses/services/expense-service";
 import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { formatCurrency } from "@/lib/utils/currency";
 import { firstInvoiceMonthFromPurchase, monthKey, todayIso } from "@/lib/utils/dates";
@@ -42,9 +43,16 @@ const blankForm = {
   description: "",
   amount: 0,
   spentAt: todayIso(),
+  isPaid: true,
   categoryId: "",
   notes: ""
 };
+
+function nextMonthIso(date: string) {
+  const parsedDate = parseISO(date);
+  const baseDate = isValid(parsedDate) ? parsedDate : parseISO(todayIso());
+  return format(addMonths(baseDate, 1), "yyyy-MM-dd");
+}
 
 export default function QuickExpensesPage() {
   const cards = usePersonalCollection<CreditCardType>("creditCards");
@@ -121,8 +129,8 @@ export default function QuickExpensesPage() {
           categoryId,
           type: "variable",
           dueDate: form.spentAt,
-          paidAt: form.spentAt,
-          isPaid: true,
+          ...(form.isPaid ? { paidAt: form.spentAt } : {}),
+          isPaid: form.isPaid,
           isRecurring: false,
           recurrenceDay: new Date(`${form.spentAt}T00:00:00`).getDate(),
           notes: [methodLabels[form.paymentMethod], form.notes].filter(Boolean).join(" · ")
@@ -136,6 +144,12 @@ export default function QuickExpensesPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function toggleExpensePaid(expense: Expense) {
+    if (expense.isPaid) await markExpenseAsOpen(expense.id);
+    else await markExpenseAsPaid(expense.id);
+    await expenses.reload();
   }
 
   const selectedCardId = form.cardId || cards.data[0]?.id || "";
@@ -168,7 +182,24 @@ export default function QuickExpensesPage() {
           ) : null}
           <Input label="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <MoneyInput label="Valor" value={form.amount} onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })} required />
-          <DatePicker label="Data" value={form.spentAt} onChange={(event) => setForm({ ...form, spentAt: event.target.value })} />
+          <div className="grid gap-2">
+            <DatePicker label="Data" value={form.spentAt} onChange={(event) => setForm({ ...form, spentAt: event.target.value })} />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="ghost" onClick={() => setForm({ ...form, spentAt: todayIso() })}>Hoje</Button>
+              <Button type="button" variant="ghost" onClick={() => setForm({ ...form, spentAt: nextMonthIso(form.spentAt) })}>Mês que vem</Button>
+            </div>
+          </div>
+          {form.paymentMethod === "credit" ? null : (
+            <Select
+              label="Status"
+              value={form.isPaid ? "paid" : "open"}
+              onChange={(event) => setForm({ ...form, isPaid: event.target.value === "paid" })}
+              options={[
+                { value: "paid", label: "Pago" },
+                { value: "open", label: "Aberto" }
+              ]}
+            />
+          )}
           <CategorySelect label="Categoria" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })} categories={categories.data} />
           <Input label="Observação" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
           <Button disabled={saving || (form.paymentMethod === "credit" && !cards.data.length)}>
@@ -197,7 +228,10 @@ export default function QuickExpensesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <strong>{formatCurrency(expense.amount)}</strong>
-                    <Badge tone="good">Pago</Badge>
+                    <Badge tone={expense.isPaid ? "good" : "warn"}>{expense.isPaid ? "Pago" : "Aberto"}</Badge>
+                    <Button variant="ghost" onClick={() => toggleExpensePaid(expense)}>
+                      {expense.isPaid ? "Abrir" : "Pagar"}
+                    </Button>
                   </div>
                 </div>
               ))}

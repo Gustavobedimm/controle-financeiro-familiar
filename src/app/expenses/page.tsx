@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
 import { DatePicker } from "@/components/forms/date-picker";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { StateMessage } from "@/components/feedback/state-message";
-import { createExpense, deleteExpense, updateExpense } from "@/features/expenses/services/expense-service";
+import { createExpense, deleteExpense, markExpenseAsOpen, markExpenseAsPaid, updateExpense } from "@/features/expenses/services/expense-service";
 import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { expenseOccursInMonth } from "@/lib/utils/calculations";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -36,12 +36,28 @@ export default function ExpensesPage() {
     event.preventDefault();
     if (!expenses.householdId || !expenses.ownerUid) return;
     const categoryId = form.categoryId || categories.data[0]?.id || "";
-    const payload = { ...form, categoryId, amount: Number(form.amount), paidAt: form.isPaid ? todayIso() : undefined, recurrenceDay: new Date(`${form.dueDate}T00:00:00`).getDate() };
-    if (editingId) await updateExpense(editingId, payload);
-    else await createExpense({ householdId: expenses.householdId, ownerUid: expenses.ownerUid, ...payload });
+    const payload = { ...form, categoryId, amount: Number(form.amount), recurrenceDay: new Date(`${form.dueDate}T00:00:00`).getDate() };
+    if (editingId) {
+      await updateExpense(editingId, payload);
+      if (form.isPaid) await markExpenseAsPaid(editingId);
+      else await markExpenseAsOpen(editingId);
+    } else {
+      await createExpense({
+        householdId: expenses.householdId,
+        ownerUid: expenses.ownerUid,
+        ...payload,
+        ...(form.isPaid ? { paidAt: todayIso() } : {})
+      });
+    }
     setForm(blank);
     setEditingId(null);
     setFormOpen(false);
+    await expenses.reload();
+  }
+
+  async function togglePaid(expense: Expense) {
+    if (expense.isPaid) await markExpenseAsOpen(expense.id);
+    else await markExpenseAsPaid(expense.id);
     await expenses.reload();
   }
 
@@ -83,6 +99,10 @@ export default function ExpensesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={expense.isPaid ? "good" : "warn"}>{expense.isPaid ? "Pago" : "Aberto"}</Badge>
+                  <Button variant="ghost" onClick={() => togglePaid(expense)}>
+                    {expense.isPaid ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                    {expense.isPaid ? "Abrir" : "Pagar"}
+                  </Button>
                   <Button variant="ghost" onClick={() => { setEditingId(expense.id); setForm({ description: expense.description, amount: expense.amount, categoryId: expense.categoryId, type: expense.type, dueDate: expense.dueDate, isPaid: expense.isPaid, isRecurring: expense.isRecurring, notes: expense.notes || "" }); setFormOpen(true); }}><Pencil size={16} /></Button>
                   <Button variant="ghost" onClick={async () => { await deleteExpense(expense.id); await expenses.reload(); }}><Trash2 size={16} /></Button>
                 </div>

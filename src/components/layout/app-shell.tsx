@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, CreditCard, FolderOpen, Home, LogOut, PiggyBank, Receipt, ReceiptText, TrendingUp, Users, WalletCards } from "lucide-react";
+import { BarChart3, CreditCard, FolderOpen, Grid3X3, Home, LogOut, PiggyBank, Receipt, ReceiptText, TrendingUp, Users, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/firebase/auth";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/features/theme/theme-toggle";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/overview", label: "Visão rápida", icon: Grid3X3 },
   { href: "/incomes", label: "Receitas", icon: TrendingUp },
   { href: "/quick-expenses", label: "Lançamentos", icon: ReceiptText },
   { href: "/expenses", label: "Despesas", icon: Receipt },
@@ -73,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-10 border-t border-border bg-card lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-11 border-t border-border bg-card lg:hidden">
         {items.map((item) => {
           const Icon = item.icon;
           const active = pathname.startsWith(item.href);

@@ -134,6 +134,13 @@ export async function updateInstallment(id: string, data: Partial<CreditCardInst
   return updateHouseholdDoc<CreditCardInstallment>("creditCardInstallments", id, data);
 }
 
+export async function markInstallmentAsOpen(id: string) {
+  return updateHouseholdDoc<CreditCardInstallment>("creditCardInstallments", id, {
+    isPaid: false,
+    paidAt: deleteField()
+  } as unknown as Partial<CreditCardInstallment>);
+}
+
 export async function markPastDueInstallmentsAsPaid(installments: CreditCardInstallment[], todayIso: string) {
   const batch = createBatch();
   const items = installments.filter((item) => !item.isPaid && item.dueDate < todayIso);

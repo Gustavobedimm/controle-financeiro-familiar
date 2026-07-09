@@ -29,6 +29,10 @@ export function updatedField() {
   return { updatedAt: serverTimestamp() };
 }
 
+function withoutUndefinedFields<T extends DocumentData>(data: T): T {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)) as T;
+}
+
 export async function listByHousehold<T extends { id: string }>(
   collectionName: string,
   householdId: string,
@@ -58,12 +62,12 @@ export async function listPersonalByHousehold<T extends { id: string }>(
 }
 
 export async function createHouseholdDoc<T extends DocumentData>(collectionName: string, data: T): Promise<string> {
-  const ref = await addDoc(collection(db, collectionName), { ...data, ...nowFields() });
+  const ref = await addDoc(collection(db, collectionName), { ...withoutUndefinedFields(data), ...nowFields() });
   return ref.id;
 }
 
 export async function updateHouseholdDoc<T extends DocumentData>(collectionName: string, id: string, data: Partial<T>) {
-  await updateDoc(doc(db, collectionName, id), { ...data, ...updatedField() });
+  await updateDoc(doc(db, collectionName, id), { ...withoutUndefinedFields(data), ...updatedField() });
 }
 
 export async function deleteHouseholdDoc(collectionName: string, id: string) {
@@ -76,7 +80,7 @@ export async function getDocument<T>(collectionName: string, id: string): Promis
 }
 
 export async function setDocument<T extends DocumentData>(collectionName: string, id: string, data: T) {
-  await setDoc(doc(db, collectionName, id), { ...data, ...nowFields() });
+  await setDoc(doc(db, collectionName, id), { ...withoutUndefinedFields(data), ...nowFields() });
 }
 
 export function createBatch() {

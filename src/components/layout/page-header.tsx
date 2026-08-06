@@ -1,9 +1,9 @@
-export function PageHeader({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) {
+export function PageHeader({ title, description, children, compact = false }: { title: string; description: string; children?: React.ReactNode; compact?: boolean }) {
   return (
-    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header className={`${compact ? "mb-3 gap-2" : "mb-6 gap-4"} flex flex-col sm:flex-row sm:items-end sm:justify-between`}>
       <div>
-        <h1 className="text-3xl font-bold tracking-normal text-foreground">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <h1 className={`${compact ? "text-2xl" : "text-3xl"} font-bold tracking-normal text-foreground`}>{title}</h1>
+        <p className={`${compact ? "mt-0.5 text-xs" : "mt-1 text-sm"} text-muted-foreground`}>{description}</p>
       </div>
       {children}
     </header>

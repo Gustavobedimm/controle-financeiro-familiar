@@ -106,6 +106,7 @@ export interface CreditCardPurchase {
   categoryId: string;
   purchaseDate: string;
   notes?: string;
+  monthlyAggregateKey?: string;
   createdAt: TimestampLike;
   updatedAt: TimestampLike;
 }

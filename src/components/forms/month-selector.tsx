@@ -12,11 +12,11 @@ export function MonthSelector({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" aria-label="Mês anterior" onClick={() => onChange(addMonthsToReference(value, -1))}>
+      <Button type="button" variant="ghost" aria-label="Mês anterior" onClick={() => onChange(addMonthsToReference(value, -1))}>
         <ChevronLeft size={18} />
       </Button>
       <strong className="min-w-44 text-center text-sm capitalize text-foreground">{readableMonth(value)}</strong>
-      <Button variant="ghost" aria-label="Próximo mês" onClick={() => onChange(addMonthsToReference(value, 1))}>
+      <Button type="button" variant="ghost" aria-label="Próximo mês" onClick={() => onChange(addMonthsToReference(value, 1))}>
         <ChevronRight size={18} />
       </Button>
     </div>

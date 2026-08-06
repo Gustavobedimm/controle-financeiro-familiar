@@ -146,17 +146,17 @@ export default function OverviewPage() {
 
   return (
     <ProtectedPage>
-      <PageHeader title="Visão rápida" description="Acompanhe pagamentos dois meses para trás e dois meses para frente." />
+      <PageHeader compact title="Visão rápida" description="Pagamentos dos últimos e próximos meses." />
       {loading ? <StateMessage title="Montando visão rápida..." /> : null}
       {!loading ? (
         <section className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] table-fixed text-left text-sm">
+            <table className="w-full min-w-[700px] table-fixed text-left text-xs sm:text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="w-[280px] p-3">Pagamento</th>
+                  <th className="sticky left-0 z-10 w-[180px] bg-muted p-2 sm:w-[220px]">Pagamento</th>
                   {months.map((month) => (
-                    <th key={`${month.year}-${month.month}`} className="p-3 text-center capitalize">
+                    <th key={`${month.year}-${month.month}`} className="p-2 text-center capitalize">
                       <span className="block font-bold text-foreground">{shortMonth(month)}</span>
                       <span className="text-xs">{month.year}</span>
                     </th>
@@ -176,44 +176,43 @@ export default function OverviewPage() {
 
                   return (
                     <tr key={row.id} className="border-t border-border">
-                      <td className="p-3 align-middle">
-                        <div className="flex min-w-0 items-center gap-3">
+                      <td className="sticky left-0 z-[5] bg-card p-2 align-middle">
+                        <div className="flex min-w-0 items-center gap-2">
                           <span
-                            className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"
+                            className="grid h-7 w-7 shrink-0 place-items-center rounded bg-muted text-muted-foreground"
                             style={row.color ? { color: row.color } : undefined}
                           >
-                            <Icon size={18} />
+                            <Icon size={14} />
                           </span>
                           <div className="min-w-0">
-                            <strong className="block truncate">{row.title}</strong>
-                            <span className="block truncate text-xs text-muted-foreground">{row.subtitle}</span>
+                            <strong className="block truncate text-xs sm:text-sm">{row.title}</strong>
+                            <span className="block truncate text-[10px] text-muted-foreground sm:text-xs">{row.subtitle}</span>
                           </div>
                         </div>
                       </td>
                       {row.cells.map((cell, index) => (
-                        <td key={`${row.id}-${months[index].year}-${months[index].month}`} className="p-2 align-middle">
+                        <td key={`${row.id}-${months[index].year}-${months[index].month}`} className="p-1 align-middle">
                           {cell ? (
                             <button
                               type="button"
                               onClick={cell.toggle}
-                              className={`grid h-24 w-full place-items-center rounded-md border p-2 text-center transition ${
+                              className={`grid h-14 w-full place-items-center rounded border px-1 py-1 text-center transition sm:h-16 ${
                                 cell.isPaid
                                   ? "border-primary/40 bg-primary/15 text-primary"
                                   : "border-border bg-background text-foreground hover:bg-accent/20"
                               }`}
                               title={cell.isPaid ? "Clique para reabrir" : "Clique para marcar como pago"}
                             >
-                              <span className="grid gap-1">
+                              <span className="grid gap-0.5">
                                 <strong>{formatCurrency(cell.amount)}</strong>
-                                <span className="text-xs text-muted-foreground">{cell.dueDate.slice(8, 10)}</span>
-                                <span className="flex items-center justify-center gap-1 text-xs font-semibold">
-                                  {cell.isPaid ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                                <span className="flex items-center justify-center gap-1 text-[10px] font-semibold sm:text-xs">
+                                  {cell.isPaid ? <CheckCircle2 size={12} /> : <Circle size={12} />}
                                   {cell.isPaid ? "Pago" : "Aberto"}
                                 </span>
                               </span>
                             </button>
                           ) : (
-                            <div className="h-24 rounded-md border border-dashed border-border bg-muted/30" />
+                            <div className="h-14 rounded border border-dashed border-border bg-muted/30 sm:h-16" />
                           )}
                         </td>
                       ))}
@@ -223,17 +222,17 @@ export default function OverviewPage() {
               </tbody>
               <tfoot className="border-t border-border bg-muted/60">
                 <tr>
-                  <td className="p-3 font-bold">Total previsto</td>
+                  <td className="sticky left-0 bg-muted p-2 font-bold">Total previsto</td>
                   {totals.map((total, index) => (
-                    <td key={`total-${months[index].year}-${months[index].month}`} className="p-3 text-center font-bold">
+                    <td key={`total-${months[index].year}-${months[index].month}`} className="p-2 text-center font-bold">
                       {formatCurrency(total)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="p-3 font-bold">Total pago</td>
+                  <td className="sticky left-0 bg-muted p-2 font-bold">Total pago</td>
                   {paidTotals.map((total, index) => (
-                    <td key={`paid-${months[index].year}-${months[index].month}`} className="p-3 text-center">
+                    <td key={`paid-${months[index].year}-${months[index].month}`} className="p-2 text-center">
                       <Badge tone={total === totals[index] && total > 0 ? "good" : "neutral"}>{formatCurrency(total)}</Badge>
                     </td>
                   ))}

@@ -1,11 +1,12 @@
 "use client";
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CategorySelect } from "@/components/forms/category-select";
 import { DatePicker } from "@/components/forms/date-picker";
 import { FloatingFormCard } from "@/components/forms/floating-form-card";
 import { MoneyInput } from "@/components/forms/money-input";
+import { MonthSelector } from "@/components/forms/month-selector";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProtectedPage } from "@/components/layout/protected-page";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,8 @@ import {
 } from "@/features/credit-cards/services/card-service";
 import { usePersonalCollection } from "@/hooks/use-personal-collection";
 import { formatCurrency } from "@/lib/utils/currency";
-import { firstInvoiceMonthFromPurchase, monthKey, todayIso } from "@/lib/utils/dates";
-import type { CreditCard, CreditCardInstallment, CreditCardPurchase, ExpenseCategory } from "@/types/finance";
+import { currentMonthReference, firstInvoiceMonthFromPurchase, monthKey, readableMonth, todayIso } from "@/lib/utils/dates";
+import type { CreditCard, CreditCardInstallment, CreditCardPurchase, ExpenseCategory, MonthReference } from "@/types/finance";
 
 const blankCardForm = { name: "", limit: 0, closingDay: 25, dueDay: 10, color: "#2a9d8f" };
 const blankPurchaseForm = {
@@ -50,6 +51,20 @@ export default function CardsPage() {
   const [purchaseForm, setPurchaseForm] = useState(blankPurchaseForm);
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [purchaseFormOpen, setPurchaseFormOpen] = useState(false);
+  const [monthlyReference, setMonthlyReference] = useState<MonthReference>(currentMonthReference());
+  const [monthlyCardId, setMonthlyCardId] = useState("");
+  const [monthlyAmount, setMonthlyAmount] = useState(0);
+  const [monthlyCategoryId, setMonthlyCategoryId] = useState("");
+  const [monthlySaving, setMonthlySaving] = useState(false);
+
+  const selectedMonthlyCardId = monthlyCardId || cards.data[0]?.id || "";
+  const monthlyAggregateKey = selectedMonthlyCardId ? `${selectedMonthlyCardId}-${monthKey(monthlyReference)}` : "";
+  const monthlyPurchase = purchases.data.find((purchase) => purchase.monthlyAggregateKey === monthlyAggregateKey);
+
+  useEffect(() => {
+    setMonthlyAmount(monthlyPurchase?.totalAmount || 0);
+    setMonthlyCategoryId(monthlyPurchase?.categoryId || "");
+  }, [monthlyPurchase?.id, monthlyPurchase?.totalAmount, monthlyPurchase?.categoryId, monthlyAggregateKey]);
 
   function resetCardForm() {
     setCardForm(blankCardForm);
@@ -112,15 +127,53 @@ export default function CardsPage() {
     await Promise.all([purchases.reload(), installments.reload()]);
   }
 
+  async function saveMonthlyTotal(event: React.FormEvent) {
+    event.preventDefault();
+    if (!cards.householdId || !cards.ownerUid || !selectedMonthlyCardId || monthlyAmount <= 0) return;
+    const card = cards.data.find((item) => item.id === selectedMonthlyCardId);
+    if (!card) return;
+    setMonthlySaving(true);
+    try {
+      const monthLabel = readableMonth(monthlyReference);
+      const purchase = {
+        householdId: cards.householdId,
+        ownerUid: cards.ownerUid,
+        cardId: card.id,
+        description: `Compras à vista — ${monthLabel}`,
+        totalAmount: Number(monthlyAmount),
+        installments: 1,
+        firstInstallmentMonth: monthKey(monthlyReference),
+        categoryId: monthlyCategoryId || categories.data[0]?.id || "",
+        purchaseDate: `${monthlyReference.year}-${String(monthlyReference.month).padStart(2, "0")}-01`,
+        notes: "Total mensal de compras à vista",
+        monthlyAggregateKey
+      };
+
+      if (monthlyPurchase) {
+        await updatePurchaseWithInstallments({
+          purchaseId: monthlyPurchase.id,
+          card,
+          purchase,
+          installments: installments.data
+        });
+      } else {
+        await createPurchaseWithInstallments({ card, purchase });
+      }
+      await Promise.all([purchases.reload(), installments.reload()]);
+    } finally {
+      setMonthlySaving(false);
+    }
+  }
+
   return (
     <ProtectedPage>
-      <PageHeader title="Cartões de crédito" description="Cadastre cartões e compras parceladas com impacto nos meses futuros.">
+      <PageHeader title="Cartões de crédito" description="Informe um total mensal para compras à vista e lance individualmente apenas as parceladas.">
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={() => { resetCardForm(); setCardFormOpen(true); }}>
             <Plus size={18} /> Novo cartão
           </Button>
           <Button type="button" variant="secondary" onClick={() => { resetPurchaseForm(); setPurchaseFormOpen(true); }}>
-            <Plus size={18} /> Nova compra
+            <Plus size={18} /> Nova compra parcelada
           </Button>
         </div>
       </PageHeader>
@@ -135,6 +188,42 @@ export default function CardsPage() {
             <Button>{editingCardId ? <Pencil size={18} /> : <Plus size={18} />} {editingCardId ? "Salvar cartão" : "Adicionar cartão"}</Button>
           </form>
       </FloatingFormCard>
+
+      <section className="mb-6 rounded-lg border border-primary/25 bg-primary/10 p-4">
+        <div className="mb-4">
+          <h2 className="font-bold">Total de compras à vista do mês</h2>
+          <p className="text-sm text-muted-foreground">Digite somente o total acumulado. Você pode atualizar este valor quantas vezes precisar.</p>
+        </div>
+        <form className="grid items-end gap-3 md:grid-cols-[minmax(180px,1fr)_auto_minmax(180px,1fr)_minmax(160px,1fr)_auto]" onSubmit={saveMonthlyTotal}>
+          <Select
+            label="Cartão"
+            value={selectedMonthlyCardId}
+            onChange={(event) => setMonthlyCardId(event.target.value)}
+            options={cards.data.map((card) => ({ value: card.id, label: card.name }))}
+            disabled={!cards.data.length}
+          />
+          <MonthSelector value={monthlyReference} onChange={setMonthlyReference} />
+          <MoneyInput label="Total à vista" value={monthlyAmount} onChange={(event) => setMonthlyAmount(Number(event.target.value))} required />
+          <CategorySelect label="Categoria" value={monthlyCategoryId} onChange={(event) => setMonthlyCategoryId(event.target.value)} categories={categories.data} />
+          <Button disabled={monthlySaving || !cards.data.length || monthlyAmount <= 0}>{monthlySaving ? "Salvando..." : monthlyPurchase ? "Atualizar total" : "Salvar total"}</Button>
+        </form>
+        {monthlyPurchase ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-primary/20 pt-3 text-sm">
+            <span className="text-muted-foreground">Este total já está incluído na fatura de {readableMonth(monthlyReference)}.</span>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={async () => {
+                await deletePurchaseAndInstallments(monthlyPurchase.id, installments.data);
+                setMonthlyAmount(0);
+                await Promise.all([purchases.reload(), installments.reload()]);
+              }}
+            >
+              <Trash2 size={16} /> Limpar total
+            </Button>
+          </div>
+        ) : null}
+      </section>
 
       <FloatingFormCard title={editingPurchaseId ? "Editar lançamento" : "Nova compra"} open={purchaseFormOpen} onOpenChange={setPurchaseFormOpen}>
           <form className="grid gap-4" onSubmit={savePurchase}>
@@ -198,7 +287,7 @@ export default function CardsPage() {
           <div className="rounded-lg border border-border bg-card p-4">
             <h2 className="mb-3 font-bold">Compras parceladas</h2>
             <div className="grid gap-2">
-              {purchases.data.map((purchase) => {
+              {purchases.data.filter((purchase) => !purchase.monthlyAggregateKey).map((purchase) => {
                 const purchaseInstallments = installments.data.filter((item) => item.purchaseId === purchase.id);
                 const purchaseCard = cards.data.find((card) => card.id === purchase.cardId);
                 const paidCount = purchaseInstallments.filter((item) => item.isPaid).length;
